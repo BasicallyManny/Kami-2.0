@@ -20,7 +20,7 @@ class MongoConnection:
         except ConnectionFailure:
             raise Exception("Connection to MongoDB failed")
         return None
-
+    #When the bot disconnects
     def disconnect(self):
         """Close the connection to MongoDB."""
         if self.client:
