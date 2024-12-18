@@ -31,10 +31,10 @@ class Kami(commands.Bot):
 
     async def load_cogs(self):
         """Load all cogs asynchronously."""
-        COG_DIRECTORY = os.path.join(os.path.dirname(__file__), "cogs")
+        COG_DIRECTORY = os.path.dirname(__file__)  # Same directory as kami.py
         for filename in os.listdir(COG_DIRECTORY):
-            if filename.endswith(".py") and filename != "__init__.py":
-                cog_name = f"cogs.{filename[:-3]}"
+            if filename.endswith(".py") and filename != "__init__.py" and filename != "kami.py":
+                cog_name = f"bot.{filename[:-3]}"  # Update to use bot as the module prefix
                 try:
                     await self.load_extension(cog_name)
                     print(f"Loaded cog: {cog_name}")
