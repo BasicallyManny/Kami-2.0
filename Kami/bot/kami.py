@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from database.connections import MongoConnection
+import asyncio
 
 # Add the root directory to sys.path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -19,8 +20,8 @@ mongo_connection = MongoConnection(MongoURI)
 # Bot Class
 class Kami(commands.Bot):
     def __init__(self, command_prefix, intents):
-        super().__init__(command_prefix=command_prefix, intents=intents)
-
+        super().__init__(command_prefix=command_prefix, intents=intents, help_command=None) #disable the default help command
+        
     async def on_ready(self):
         print(f"Bot is ready! Logged in as {self.user}")
         mongo_connection.connect()
@@ -46,7 +47,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 # Initialize Bot
-client = Kami(command_prefix="-", intents=intents)
+client = Kami(command_prefix="-", intents=intents) #disable the default help command
 
 # Main Function
 async def main():
@@ -56,5 +57,4 @@ async def main():
 
 # Run the Bot
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())
