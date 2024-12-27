@@ -3,7 +3,7 @@ import sys
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from database.connections import MongoConnection
+from Kami.backend.config.connections import MongoConnection
 import asyncio
 
 # Add the root directory to sys.path

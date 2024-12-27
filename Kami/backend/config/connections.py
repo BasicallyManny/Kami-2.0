@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from pymongo import MongoClient # type: ignore
 
 class MongoConnection:
     def __init__(self, uri: str):
