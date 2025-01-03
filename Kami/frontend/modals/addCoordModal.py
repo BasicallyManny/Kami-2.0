@@ -62,19 +62,27 @@ class AddCoordModal(Modal):
                 "Please enter valid numeric values for X, Y, and Z.", ephemeral=True
             )
             return
-
-        response_embed = discord.Embed(
+        
+        try:
+            response_embed = discord.Embed(
             title="Coordinate Added",
             description=f"Coordinate `{name}` added successfully.",
             color=discord.Color.green()
-        )
-        response_embed.set_author(
-            name=interaction.user.display_name, 
-            icon_url=interaction.user.avatar.url if interaction.user.avatar else None
-        )
-        response_embed.add_field(
-            name="Coordinates", 
-            value=f"X: {x}\nY: {y}\nZ: {z}\nDimension: {dimension}", 
-            inline=False
-        )
+            )
+            response_embed.set_author(
+                name=interaction.user.display_name, 
+                icon_url=interaction.user.avatar.url if interaction.user.avatar else None
+            )
+            response_embed.add_field(
+                name="Coordinates", 
+                value=f"X: {x}\nY: {y}\nZ: {z}\nDimension: {dimension}", 
+                inline=False
+            )
+        except Exception as e:
+            await interaction.response.send_message(
+                f"An error occurred: {str(e)}", ephemeral=True
+            )
+            return
+
+        await interaction.response.send_message(embed=response_embed, ephemeral=True)
 

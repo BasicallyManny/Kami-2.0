@@ -79,7 +79,10 @@ class MinecraftAssistantCog(commands.Cog):
         """
         Add a Minecraft coordinate using a modal
         """
-        await interaction.response.send_modal(AddCoordModal())
+        try:
+            await interaction.response.send_modal(AddCoordModal())
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
 
 
 # Setup function for loading the cog
