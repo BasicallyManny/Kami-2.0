@@ -1,4 +1,4 @@
-from pydantic import BaseSettings
+from pydantic import BaseSettings # type: ignore
 
 class Settings(BaseSettings):
     app_name: str = "Discord Bot API"

@@ -3,7 +3,7 @@ import sys
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from database.connections import MongoConnection
+from backend.config.connections import MongoConnection
 import asyncio
 
 # Add the root directory to sys.path
@@ -20,11 +20,18 @@ mongo_connection = MongoConnection(MongoURI)
 # Bot Class
 class Kami(commands.Bot):
     def __init__(self, command_prefix, intents):
-        super().__init__(command_prefix=command_prefix, intents=intents, help_command=None) #disable the default help command
-        
+        super().__init__(command_prefix=command_prefix, intents=intents, help_command=None)  # Disable the default help command
+
     async def on_ready(self):
         print(f"Bot is ready! Logged in as {self.user}")
         mongo_connection.connect()
+
+        # Sync application commands
+        try:
+            await self.tree.sync()
+            print("Slash commands synced successfully!")
+        except Exception as e:
+            print(f"Failed to sync slash commands: {e}")
 
     async def on_disconnect(self):
         print("Bot is disconnecting...")
@@ -35,7 +42,7 @@ class Kami(commands.Bot):
         COG_DIRECTORY = os.path.dirname(__file__)  # Same directory as kami.py
         for filename in os.listdir(COG_DIRECTORY):
             if filename.endswith(".py") and filename != "__init__.py" and filename != "kami.py":
-                cog_name = f"bot.{filename[:-3]}"  # Update to use bot as the module prefix
+                cog_name = f"frontend.{filename[:-3]}"  # Update to use bot as the module prefix
                 try:
                     await self.load_extension(cog_name)
                     print(f"Loaded cog: {cog_name}")
@@ -43,11 +50,11 @@ class Kami(commands.Bot):
                     print(f"Failed to load cog {cog_name}: {e}")
 
 # Bot Intents
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 intents.message_content = True
 
 # Initialize Bot
-client = Kami(command_prefix="-", intents=intents) #disable the default help command
+client = Kami(command_prefix="-", intents=intents)
 
 # Main Function
 async def main():
