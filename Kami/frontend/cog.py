@@ -4,7 +4,8 @@ from discord import app_commands
 
 import os
 from dotenv import load_dotenv
-from modals.addCoordModal import AddCoordModal 
+from modals.addCoordModal import AddCoordModal
+from modals.delCoordModal import DelCoordModal 
 
 # Load environment variables
 load_dotenv()
@@ -51,13 +52,13 @@ class MinecraftAssistantCog(commands.Cog):
     async def list(self, ctx):
         "List all commands"
         coordinate_commands = [
-            "- **addcoord**: Save a Minecraft coordinate.",
-            "- **deletecoord**: Delete a Minecraft coordinate by its name.",
-            "- **clearcoords**: Clear all Minecraft coordinates for the current guild.",
-            "- **find**: Search for a Minecraft coordinate by its name.",
-            "- **updateName (name)**: Update the name of an already saved coordinate.",
-            "- **updateCoord (name)**: Update the coordinates of an already saved coordinate.",
-            "- **listcoords**: Retrieve all Minecraft coordinates for the current guild."
+            "- **/addcoord**: Save a Minecraft coordinate.",
+            "- **/deletecoord**: Delete a Minecraft coordinate by its name.",
+            "- **-clearcoords**: Clear all Minecraft coordinates for the current guild.",
+            "- **-find**: Search for a Minecraft coordinate by its name.",
+            "- **/updateName (name)**: Update the name of an already saved coordinate.",
+            "- **/updateCoord (name)**: Update the coordinates of an already saved coordinate.",
+            "- **-listcoords**: Retrieve all Minecraft coordinates for the current guild."
         ]
         
         commands_Embed = discord.Embed(
@@ -83,6 +84,17 @@ class MinecraftAssistantCog(commands.Cog):
             await interaction.response.send_modal(AddCoordModal())
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+    
+    @app_commands.command(name="deletecoord", description="Remove a Minecraft coordinate using a modal")
+    async def del_coord(self, interaction: discord.Interaction):
+        """
+        Remove a Minecraft coordinate using a modal
+        """
+        try:
+            await interaction.response.send_modal(DelCoordModal())
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+        
 
 
 # Setup function for loading the cog
