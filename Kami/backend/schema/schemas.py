@@ -10,3 +10,8 @@ def coordinate_serializer(coordinate)->dict:
         "z": coordinate["z"],
         "dimension": coordinate["dimension"],
     }
+
+def coordinates_serializer(coordinates)->list:
+    if not coordinates: 
+        return []
+    return [coordinate_serializer(coordinate) for coordinate in coordinates]    

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query # type: ignore
 from Kami.backend.config.connections import MongoConnection
-from Kami.backend.models import MinecraftCoordinate
+from Kami.backend.routes import router
 import os
 from dotenv import load_dotenv
 
@@ -20,7 +20,6 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     mongo_connection.disconnect()
-
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the Minecraft Assistant API!"}
+    
+# Include the routes
+app.include_router(router, prefix="/api", tags=["API"])

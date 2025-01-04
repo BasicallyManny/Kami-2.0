@@ -3,7 +3,6 @@ import sys
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from backend.config.connections import MongoConnection
 import asyncio
 
 # Add the root directory to sys.path
@@ -12,10 +11,6 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # Load environment variables
 load_dotenv()
 DiscordToken = os.getenv("discordbotToken")
-MongoURI = os.getenv("mongoConnectionString")
-
-# Initialize MongoDB connection
-mongo_connection = MongoConnection(MongoURI)
 
 # Bot Class
 class Kami(commands.Bot):
@@ -24,7 +19,6 @@ class Kami(commands.Bot):
 
     async def on_ready(self):
         print(f"Bot is ready! Logged in as {self.user}")
-        mongo_connection.connect()
 
         # Sync application commands
         try:
@@ -35,7 +29,6 @@ class Kami(commands.Bot):
 
     async def on_disconnect(self):
         print("Bot is disconnecting...")
-        mongo_connection.disconnect()
 
     async def load_cogs(self):
         """Load all cogs asynchronously."""
