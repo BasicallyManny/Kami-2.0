@@ -1,4 +1,7 @@
 from pymongo import MongoClient  # type: ignore
+from pymongo.errors import PyMongoError
+from urllib.parse import urlparse
+
 
 
 class MongoConnection:
@@ -8,14 +11,26 @@ class MongoConnection:
         self.client = None
 
     def connect(self):
-        """Connect to MongoDB"""
-        self.client = MongoClient(self.uri)
-        print("Connected to MongoDB")
+        """Connect to MongoDB with error handling"""
+        try:
+            # Extract the cluster name (hostname portion of the URI)
+            parsed_uri = urlparse(self.uri)
+            cluster_name = parsed_uri.hostname  # Extract the cluster name from the URI
+            print(f"Attempting to connect to MongoDB cluster: {cluster_name}")
+            self.client = MongoClient(self.uri)
+            self.client.admin.command('ping')  # Ping the server to confirm connection
+            print("Connected to MongoDB")
+        except PyMongoError as e:
+            print(f"Error connecting to MongoDB: {e}")
+            raise Exception("Failed to connect to MongoDB.")
 
     def disconnect(self):
+        """Disconnect from MongoDB"""
         if self.client:
             self.client.close()
             print("Disconnected from MongoDB")
+        else:
+            print("No active MongoDB connection to disconnect.")
 
     def get_db(self, db_name: str):
         """Gets or creates the database with the given name."""

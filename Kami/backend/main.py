@@ -1,7 +1,33 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.concurrency import asynccontextmanager
 
-app = FastAPI()
+from config.connections import MongoConnection
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+mongoConnectionString = os.getenv("mongoConnectionString")
+# Initialize MongoDB connection with the URI loaded from environment variables
+mongoConnection = MongoConnection(mongoConnectionString)  # Update this URI to your MongoDB connection string
+
+# Lifespan context manager for handling MongoDB connection at startup and shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handle MongoDB connection at startup and shutdown."""
+    try:
+        mongoConnection.connect()  # Connect to MongoDB
+        yield
+    except Exception as e:
+        print(f"Error during lifespan: {e}")
+        raise e
+    finally:
+        print("Disconnecting MongoDB...")
+        mongoConnection.disconnect()  # Disconnect from MongoDB
+
+# Initialize FastAPI app and register lifespan context manager
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/", response_class=HTMLResponse, tags=["Home"])
 async def root():
@@ -29,3 +55,4 @@ async def root():
         """
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
