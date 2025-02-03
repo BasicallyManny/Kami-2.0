@@ -50,3 +50,4 @@ class MongoConnection:
         db = self.get_db(db_name)
         collection = db[collection_name]
         return collection.find(query)
+    
