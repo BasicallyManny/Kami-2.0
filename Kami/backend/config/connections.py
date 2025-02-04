@@ -2,8 +2,6 @@ from pymongo import MongoClient  # type: ignore
 from pymongo.errors import PyMongoError
 from urllib.parse import urlparse
 
-
-
 class MongoConnection:
     """Manages MongoDB connections and operations."""
     def __init__(self, uri: str):
@@ -65,4 +63,3 @@ class MongoConnection:
         db = self.get_db(db_name)
         collection = db[collection_name]
         return collection.find(query)
-    
