@@ -25,6 +25,7 @@ class MinecraftCoordinate(BaseModel):
     user_id: str  # User ID as string for consistency with Discord API
     username: str
     avatar_url: Optional[str] = None  # Avatar URL is optional
+    coordinateName:str
     coordinates: CoordinateDetails
     dimension: DimensionEnum  # Use the DimensionEnum for Minecraft dimensions
     description: Optional[str] = None  # Description is optional

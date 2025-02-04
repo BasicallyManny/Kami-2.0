@@ -1,26 +1,30 @@
-from pymongo import MongoClient  # type: ignore
+from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 from urllib.parse import urlparse
 
+
 class MongoConnection:
-    """Manages MongoDB connections and operations."""
+    """Handles MongoDB connection and basic database operations"""
+
     def __init__(self, uri: str):
         self.uri = uri
         self.client = None
+        self.connect()
 
     def connect(self):
-        """Connect to MongoDB with error handling"""
+        """Establish a connection to MongoDB"""
         try:
-            # Extract the cluster name (hostname portion of the URI)
             parsed_uri = urlparse(self.uri)
-            cluster_name = parsed_uri.hostname  # Extract the cluster name from the URI
+            cluster_name = parsed_uri.hostname  # Extract cluster name
+            print(f"MongoDB URI (connections): {parsed_uri}")
             print(f"Attempting to connect to MongoDB cluster: {cluster_name}")
+
             self.client = MongoClient(self.uri)
-            self.client.admin.command('ping')  # Ping the server to confirm connection
-            print("Connected to MongoDB")
+            self.client.admin.command("ping")  # Test connection
+            print("Connected to MongoDB through Connections")
         except PyMongoError as e:
             print(f"Error connecting to MongoDB: {e}")
-            raise Exception("Failed to connect to MongoDB.")
+            raise Exception("Failed to connect to MongoDB.")    
 
     def disconnect(self):
         """Disconnect from MongoDB"""
@@ -31,11 +35,22 @@ class MongoConnection:
             print("No active MongoDB connection to disconnect.")
 
     def get_db(self, db_name: str):
-        """Gets or creates the database with the given name."""
-        if self.client:
-            return self.client[db_name]
-        else:
+        """Retrieve the specified database"""
+        if not self.client:
             raise Exception("Not connected to MongoDB")
+
+        # Check if the database exists
+        db_list = self.client.list_database_names()
+        if db_name not in db_list:
+            raise Exception(f"Database '{db_name}' does not exist")
+
+        return self.client[db_name]
+
+        
+    def get_collection(self, db_name: str, collection_name: str):
+        """Retrieve the specified collection"""
+        db = self.get_db(db_name)
+        return db[collection_name]
 
     def insert_document(self, db_name: str, collection_name: str, document: dict):
         """Insert a document into a collection"""
@@ -43,6 +58,12 @@ class MongoConnection:
         collection = db[collection_name]
         result = collection.insert_one(document)
         return str(result.inserted_id)
+
+    def find_documents(self, db_name: str, collection_name: str, query: dict):
+        """Retrieve documents from a collection"""
+        db = self.get_db(db_name)
+        collection = db[collection_name]
+        return list(collection.find(query)) or []   # Convert cursor to list
 
     def delete_document(self, db_name: str, collection_name: str, query: dict):
         """Delete a document from a collection"""
@@ -57,9 +78,3 @@ class MongoConnection:
         collection = db[collection_name]
         result = collection.update_one(query, {"$set": update})
         return result.modified_count
-
-    def find_document(self, db_name: str, collection_name: str, query: dict):
-        """Find documents from a collection"""
-        db = self.get_db(db_name)
-        collection = db[collection_name]
-        return collection.find(query)
