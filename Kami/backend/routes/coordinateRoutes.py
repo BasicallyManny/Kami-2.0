@@ -62,28 +62,19 @@ async def get_coordinates_by_guild(guild_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-#addcoord: Save a Minecraft coordinate.
-@coordinateRouter.get("/coordinates", response_model=List[MinecraftCoordinate])
-async def get_all_coordinates():
+#addcoord: Add a new Minecraft coordinate to the database.
+@coordinateRouter.post("/coordinates/{guild_id}/{coordinate_name}", response_model=MinecraftCoordinate)
+async def add_coordinate(guild_id: str, coordinate_name: str, coordinate: MinecraftCoordinate):
     """
-    Retrieves all Minecraft coordinates stored in the database.
-    Returns a message if no coordinates are found.
+    Adds a new Minecraft coordinate to the database.
     """
     try:
-        coordinates = MongoConnection.find_documents(DB_NAME, COLLECTION_NAME, {})
-
-        if not coordinates:
-            return {"message": "No coordinates found in the database."}
-
-        # Transform each document into a MinecraftCoordinate object
-        minecraft_coordinates = [MinecraftCoordinate(**coord) for coord in coordinates]
-        
-        return minecraft_coordinates  # Return the list of coordinates as MinecraftCoordinate objects
+        coordinate.guild_id = guild_id
+        coordinate.coordinateName = coordinate_name
+        MongoConnection.insert_document(DB_NAME, COLLECTION_NAME, coordinate.dict())
+        return coordinate
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    
+        raise HTTPException(status_code=500, detail=str(e)) 
 #deletecoord: Delete a Minecraft coordinate by its name.
 @coordinateRouter.delete("/coordinates/{guild_id}/{coordinate_name}")
 async def delete_coordinate(guild_id: str, coordinate_name: str):
