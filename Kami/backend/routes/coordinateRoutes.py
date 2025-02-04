@@ -1,7 +1,8 @@
 # Defines API endpoints that handle HTTP requests, validate input, and call MongoConnection methods.
 from models.coordinates import MinecraftCoordinate
 from config.connections import MongoConnection
-from typing import List
+from typing import List, Optional
+
 from fastapi import APIRouter, HTTPException # type: ignore
 from dotenv import load_dotenv
 import os
@@ -71,10 +72,12 @@ async def add_coordinate(guild_id: str, coordinate_name: str, coordinate: Minecr
     try:
         coordinate.guild_id = guild_id
         coordinate.coordinateName = coordinate_name
+        # Insert Coordinate Details into the database
         MongoConnection.insert_document(DB_NAME, COLLECTION_NAME, coordinate.dict())
         return coordinate
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
+
 #deletecoord: Delete a Minecraft coordinate by its name.
 @coordinateRouter.delete("/coordinates/{guild_id}/{coordinate_name}")
 async def delete_coordinate(guild_id: str, coordinate_name: str):
