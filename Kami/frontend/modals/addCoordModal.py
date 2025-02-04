@@ -1,5 +1,6 @@
 import discord
 from discord.ui import Modal, TextInput
+import httpx
 
 class AddCoordModal(Modal):
     def __init__(self):
@@ -34,10 +35,9 @@ class AddCoordModal(Modal):
         )
         self.dimension = TextInput(
             label="Dimension", 
-            placeholder="Enter the dimension (e.g., Overworld, Nether, End)", 
+            placeholder="Enter the Dimension", 
             style=discord.TextStyle.short, 
-            required=True, 
-            max_length=100
+            required=True
         )
 
         self.add_item(self.name)
@@ -47,38 +47,65 @@ class AddCoordModal(Modal):
         self.add_item(self.dimension)
 
     async def on_submit(self, interaction: discord.Interaction):
-        name = self.name.value
-        x = self.x.value
-        y = self.y.value
-        z = self.z.value
-        dimension = self.dimension.value
+        name = self.name.value.strip()
+        x = self.x.value.strip()
+        y = self.y.value.strip()
+        z = self.z.value.strip()
+        dimension = self.dimension.value.strip().lower()
 
+        # Validate numeric inputs
         try:
             x = int(x)
             y = int(y)
             z = int(z)
         except ValueError:
             await interaction.response.send_message(
-                "Please enter valid numeric values for X, Y, and Z.", ephemeral=True
+                "Please enter valid integer values for X, Y, and Z.", ephemeral=True
             )
             return
-        #CONNECT TO FASTAPI ENDPOINT
         
-        response_embed = discord.Embed(
-            title="Coordinate Added",
-            description=f"Coordinate `{name}` added successfully.",
-            color=discord.Color.green()
-        )
-        response_embed.set_author(
-            name=interaction.user.display_name, 
-            icon_url=interaction.user.avatar.url if interaction.user.avatar else None
-        )
-        response_embed.add_field(
-            name="Coordinates", 
-            value=f"X: {x}\nY: {y}\nZ: {z}\nDimension: {dimension}", 
-            inline=False
-        )
+        # Construct payload
+        data = {
+            "guild_id": str(interaction.guild.id),
+            "guild_name": interaction.guild.name,
+            "channel_id": str(interaction.channel.id),
+            "user_id": str(interaction.user.id),
+            "username": interaction.user.name,
+            "avatar_url": str(interaction.user.avatar.url) if interaction.user.avatar else None,
+            "coordinateName": name,
+            "coordinates": {"x": x, "y": y, "z": z},
+            "dimension": dimension,
+        }
 
+        # Send to FastAPI backend
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"http://localhost:8000/coordinates/{interaction.guild.id}/{name}",
+                    json=data
+                )
 
-        await interaction.response.send_message(embed=response_embed, ephemeral=True)
+            # Handle response
+            if response.status_code == 200:
+                response_embed = discord.Embed(
+                    title="✅ Coordinate Added",
+                    description=f"Coordinate `{name}` added successfully!",
+                    color=discord.Color.green()
+                )
+                response_embed.set_author(
+                    name=interaction.user.display_name, 
+                    icon_url=interaction.user.avatar.url if interaction.user.avatar else None
+                )
+                response_embed.add_field(
+                    name="Coordinates", 
+                    value=f"**X:** {x}\n**Y:** {y}\n**Z:** {z}\n**Dimension:** {dimension}",
+                    inline=False
+                )
+                await interaction.response.send_message(embed=response_embed, ephemeral=True)
+            else:
+                raise Exception(f"Server responded with status {response.status_code}: {response.text}")
 
+        except Exception as e:
+            await interaction.response.send_message(
+                f"⚠️ Error: {str(e)}. Please try again later.", ephemeral=True
+            )

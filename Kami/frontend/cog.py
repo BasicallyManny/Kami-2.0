@@ -2,14 +2,9 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-import os
-from dotenv import load_dotenv
 from modals.addCoordModal import AddCoordModal
 from modals.delCoordModal import DelCoordModal 
 
-# Load environment variables
-load_dotenv()
-API_URL = os.getenv("apiBaseUrl", "http://127.0.0.1:8000")
 
 # Define the Minecraft Assistant Cog
 class MinecraftAssistantCog(commands.Cog):
@@ -20,7 +15,7 @@ class MinecraftAssistantCog(commands.Cog):
     async def on_ready(self):
         print("Bot is ready!")
         
-    @commands.command(name="help")
+    @commands.command(name="help") 
     async def help(self, ctx):
         'Displays general information about Kami'
         help_Embed = discord.Embed(
