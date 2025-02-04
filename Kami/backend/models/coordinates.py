@@ -20,6 +20,7 @@ class MinecraftCoordinate(BaseModel):
     """Pydantic model for Minecraft coordinate data."""
     _id: str
     guild_id: str  # Guild ID should be a string for Discord integration
+    guild_name:str
     channel_id: str  # Channel ID as string for consistency with Discord API
     user_id: str  # User ID as string for consistency with Discord API
     username: str
