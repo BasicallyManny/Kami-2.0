@@ -50,16 +50,34 @@ async def get_coordinates_by_guild(guild_name: str):
     Retrieves all Minecraft coordinates stored in the database for a specific guild.
     """
     try:
-        # Fetch the coordinates for the specified guild
         coordinates = MongoConnection.find_documents(DB_NAME, COLLECTION_NAME, {"guild_id": guild_name})
 
-        if not coordinates:
-            return {"message": f"No coordinates found for guild {guild_name}."}
+        print(f"📌 Database Response: {coordinates}")  #Debugging log
 
-        # Transform the documents to the MinecraftCoordinate model
+        if not coordinates:  
+            return []  #Ensure a list is always returned
+
         minecraft_coordinates = [MinecraftCoordinate(**coord) for coord in coordinates]
+        
+        return minecraft_coordinates  #Always returns a List
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-        return minecraft_coordinates  # Return the list of coordinates in the right format
+
+    
+#find: Search for a Minecraft coordinate by its name.
+@coordinateRouter.get("/coordinates/{coordinate_name}", response_model=MinecraftCoordinate)
+async def find_coordinate(coordinate_name: str, guild_id: str = None):
+    """
+    Retrieves a Minecraft coordinate from the database by its name.
+    """
+    try:
+        coordinate = MongoConnection.find_document(DB_NAME, COLLECTION_NAME, {"coordinateName": coordinate_name, "guild_id": guild_id})
+
+        if not coordinate:
+            raise HTTPException(status_code=404, detail="Coordinate not found")
+
+        return MinecraftCoordinate(**coordinate)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -104,31 +122,19 @@ async def clear_coordinates(guild_id: str):
     Deletes all Minecraft coordinates from the database for a specific guild.
     """
     try:
-        deleted_count = MongoConnection.delete_document(DB_NAME, COLLECTION_NAME, {"guild_id": guild_id})
+        result = MongoConnection.clear_documents(DB_NAME, COLLECTION_NAME, {"guild_id": guild_id})  # ✅ Pass filter query
 
-        if deleted_count == 0:
-            raise HTTPException(status_code=404, detail="No coordinates found")
+        if result.deleted_count == 0:
+            return {"message": "No coordinates found for this guild, nothing to delete"}
 
-        return {"message": "Coordinates deleted successfully"}
+        return {"message": f"Deleted {result.deleted_count} coordinates successfully"}
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+
     
-#find: Search for a Minecraft coordinate by its name.
-@coordinateRouter.get("/coordinates/{coordinate_name}", response_model=MinecraftCoordinate)
-async def find_coordinate(coordinate_name: str, guild_id: str = None):
-    """
-    Retrieves a Minecraft coordinate from the database by its name.
-    """
-    try:
-        coordinate = MongoConnection.find_document(DB_NAME, COLLECTION_NAME, {"coordinateName": coordinate_name, "guild_id": guild_id})
-
-        if not coordinate:
-            raise HTTPException(status_code=404, detail="Coordinate not found")
-
-        return MinecraftCoordinate(**coordinate)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-#updateName (name): Update the name of an already saved coordinate.\
+    
+#updateName (name): Update the name of an already saved coordinate.
 #updateCoord (name): Update the coordinates of an already saved coordinate.
 
     
