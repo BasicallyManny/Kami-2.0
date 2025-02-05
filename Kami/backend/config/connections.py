@@ -63,7 +63,8 @@ class MongoConnection:
         """Retrieve documents from a collection"""
         db = self.get_db(db_name)
         collection = db[collection_name]
-        return list(collection.find(query)) or []   # Convert cursor to list
+        return list(collection.find(query)) 
+
 
     def delete_document(self, db_name: str, collection_name: str, query: dict):
         """Delete a document from a collection"""
@@ -71,6 +72,12 @@ class MongoConnection:
         collection = db[collection_name]
         result = collection.delete_one(query)
         return result.deleted_count
+    
+    def clear_documents(self, db_name: str, collection_name: str, filter_query: dict):
+        """Clear documents matching the filter from a collection"""
+        db = self.get_db(db_name)
+        collection = db[collection_name]
+        return collection.delete_many(filter_query)
 
     def update_document(self, db_name: str, collection_name: str, query: dict, update: dict):
         """Update a document in a collection"""
