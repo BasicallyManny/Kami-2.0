@@ -101,7 +101,7 @@ class AddCoordModal(Modal):
                     value=f"**X:** {x}\n**Y:** {y}\n**Z:** {z}\n**Dimension:** {dimension}",
                     inline=False
                 )
-                await interaction.response.send_message(embed=response_embed, ephemeral=True)
+                await interaction.response.send_message(embed=response_embed)
             else:
                 raise Exception(f"Server responded with status {response.status_code}: {response.text}")
 
