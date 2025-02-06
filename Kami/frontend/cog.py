@@ -1,3 +1,4 @@
+import asyncio
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -96,7 +97,7 @@ class MinecraftAssistantCog(commands.Cog):
         """
         Clear all Minecraft coordinates for the current guild
         """
-        await interaction.response.defer()  # ✅ Defer response to prevent timeout
+        await interaction.response.defer()  # Defer response to prevent timeout
 
         try:
             async with httpx.AsyncClient() as client:
@@ -130,52 +131,105 @@ class MinecraftAssistantCog(commands.Cog):
             )
 
         await interaction.followup.send(embed=response_embed)
+    
+    @app_commands.command(name="listcoords", description="List all Minecraft coordinates for the current guild")
+    async def list_coords(self, interaction: discord.Interaction):
+        """
+        List all Minecraft coordinates for the current guild with pagination and sorting.
+        """
+        await interaction.response.defer()  # Prevent timeout while fetching data
 
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"http://localhost:8000/coordinates/{interaction.guild.id}")
 
-@commands.command(name="clearcoords", description="Clear all Minecraft coordinates for the current guild")
-async def clear_coords(self, interaction: discord.Interaction):
-    """
-    Clear all Minecraft coordinates for the current guild
-    """
-    await interaction.response.defer()  # Prevent timeout
+            if response.status_code == 200:
+                coordinates = response.json()
 
-    api_url = f"http://localhost:8000/coordinates/{interaction.guild.id}"  
-    print(f"🔗 Sending DELETE request to API: {api_url}")  # Debugging log
+                if not coordinates:
+                    response_embed = discord.Embed(
+                        title="❌ No Coordinates Saved",
+                        description="There are no saved coordinates for this server.",
+                        color=discord.Color.red()
+                    )
+                    await interaction.followup.send(embed=response_embed)
+                    return
 
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.delete(api_url)
-        
-        print(f"📩 API Response: {response.status_code} - {response.text}")  # ✅ Debugging log
+                # Sort by dimension
+                coordinates.sort(key=lambda c: c.get("dimension", ""))
 
-        if response.status_code == 200:
+                # Pagination setup
+                MAX_COORDS_PER_PAGE=5
+                total_pages = (len(coordinates) // MAX_COORDS_PER_PAGE) + (1 if len(coordinates) % MAX_COORDS_PER_PAGE > 0 else 0)
+                current_page = 0
+
+                async def generate_embed(page: int):
+                    """Creates an embed for the given page index."""
+                    start = page * MAX_COORDS_PER_PAGE
+                    end = start + MAX_COORDS_PER_PAGE
+                    coords_page = coordinates[start:end]
+
+                    embed = discord.Embed(
+                        title=f"Saved Coordinates (Page {page+1}/{total_pages})",
+                        color=discord.Color.green()
+                    )
+
+                    for coord in coords_page:
+                        name = coord.get("coordinateName", "Unknown Name")
+                        coords = coord.get("coordinates", "Unknown Coordinates")
+                        dimension = coord.get("dimension", "Unknown Dimension")
+                        username = coord.get("username", "Unknown User")
+                        
+                        #format the coords
+                        coords = f"{coords.get('x', 'Unknown')},{coords.get('y', 'Unknown')},{coords.get('z', 'Unknown')}"
+                        embed.add_field(
+                            name=f"📌**{name}**",
+                            value=f"**Coordinates: **{coords}\n**Dimension:** {dimension}\n**Saved by: {username}**" ,
+                            inline=False
+                        )
+                    # Bot's avatar as author icon
+                    bot_avatar = self.bot.user.avatar.url if self.bot.user.avatar else "https://cdn.discordapp.com/embed/avatars/0.png"
+                    embed.set_author(name="Kami", icon_url=bot_avatar)
+
+                    return embed
+
+                # Send first page
+                message = await interaction.followup.send(embed=await generate_embed(current_page))
+
+                # If only one page, no need for reactions
+                if total_pages == 1:
+                    return
+
+                # Add pagination reactions
+                await message.add_reaction("⬅️")
+                await message.add_reaction("➡️")
+
+                def check(reaction, user):
+                    return user == interaction.user and reaction.message.id == message.id and str(reaction.emoji) in ["⬅️", "➡️"]
+
+                while True:
+                    try:
+                        reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+
+                        if str(reaction.emoji) == "➡️" and current_page < total_pages - 1:
+                            current_page += 1
+                        elif str(reaction.emoji) == "⬅️" and current_page > 0:
+                            current_page -= 1
+
+                        await message.edit(embed=await generate_embed(current_page))
+                        await message.remove_reaction(reaction, user)
+
+                    except asyncio.TimeoutError:
+                        break  # Exit loop if user is inactive
+
+        except Exception as e:
+            print(f"❌ Error fetching coordinates: {str(e)}")  # Debugging log
             response_embed = discord.Embed(
-                title="🗑️ Coordinates Cleared",
-                description="All Minecraft coordinates for this server have been successfully deleted.",
-                color=discord.Color.green()
-            )
-        elif response.status_code == 404:
-            response_embed = discord.Embed(
-                title="❌ No Coordinates Saved",
-                description="No coordinates were found for this server.",
+                title="❌ Error",
+                description=f"An error occurred: {str(e)}",
                 color=discord.Color.red()
             )
-        else:
-            response_embed = discord.Embed(
-                title="⚠️ Deletion Failed",
-                description=f"Unexpected error: {response.text}",
-                color=discord.Color.orange()
-            )
-
-    except Exception as e:
-        print(f"❌ Error sending request: {str(e)}")  # ✅ Debugging log
-        response_embed = discord.Embed(
-            title="❌ Error",
-            description=f"An error occurred: {str(e)}",
-            color=discord.Color.red()
-        )
-
-    await interaction.followup.send(embed=response_embed)
+            await interaction.followup.send(embed=response_embed)
 
 # Setup function for loading the cog
 async def setup(bot):

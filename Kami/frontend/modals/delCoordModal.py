@@ -35,15 +35,15 @@ class DelCoordModal(Modal):
                 )
             elif response.status_code == 404:
                 response_embed = discord.Embed(
-                    title="❌ Coordinate Not Found",
-                    description=f"Could not find a coordinate named `{name}`.",
-                    color=discord.Color.red()
-                )
-            else:
-                response_embed = discord.Embed(
                     title="⚠️ Deletion Failed",
                     description="An error occurred while trying to delete the coordinate. Please try again.",
                     color=discord.Color.orange()
+                )
+            else:
+                response_embed = discord.Embed(
+                    title="❌ Coordinate Not Found",
+                    description=f"Could not find a coordinate named `{name}`.",
+                    color=discord.Color.red()
                 )
 
         except Exception as e:
