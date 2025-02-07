@@ -85,3 +85,9 @@ class MongoConnection:
         collection = db[collection_name]
         result = collection.update_one(query, {"$set": update})
         return result.modified_count
+    
+    def find_one_document(self, db_name: str, collection_name: str, query: dict):
+        """Find a single document in a collection based on the query"""
+        db = self.get_db(db_name)
+        collection = db[collection_name]
+        return collection.find_one(query)

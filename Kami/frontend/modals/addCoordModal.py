@@ -2,6 +2,8 @@ import discord
 from discord.ui import Modal, TextInput
 import httpx
 
+from modals.confirmOverrideView import ConfirmOverwriteView
+
 class AddCoordModal(Modal):
     def __init__(self):
         super().__init__(title="Add Coordinate")
@@ -77,13 +79,25 @@ class AddCoordModal(Modal):
             "dimension": dimension,
         }
 
-        # Send to FastAPI backend
+        # Check if coordinate name exists
         try:
+            await interaction.response.defer()
+            api_url = f"http://localhost:8000/coordinates/{interaction.guild.id}/{name}"
+            
             async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"http://localhost:8000/coordinates/{interaction.guild.id}/{name}",
-                    json=data
+                response = await client.get(api_url)
+
+            if response.status_code == 200:  # Coordinate with the same name exists
+                overwrite_view = ConfirmOverwriteView(data)
+                await interaction.followup.send(
+                    "A coordinate with this name already exists. Would you like to overwrite it, rename it, or cancel?",
+                    view=overwrite_view
                 )
+                return
+
+            # Send POST request to FastAPI endpoint (only if name is not taken)
+            async with httpx.AsyncClient() as client:
+                response = await client.post(f"http://localhost:8000/coordinates/{interaction.guild.id}/{name}", json=data)
 
             # Handle response
             if response.status_code == 200:
@@ -101,11 +115,11 @@ class AddCoordModal(Modal):
                     value=f"**X:** {x}\n**Y:** {y}\n**Z:** {z}\n**Dimension:** {dimension}",
                     inline=False
                 )
-                await interaction.response.send_message(embed=response_embed)
+                await interaction.followup.send(embed=response_embed)
             else:
                 raise Exception(f"Server responded with status {response.status_code}: {response.text}")
 
         except Exception as e:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"⚠️ Error: {str(e)}. Please try again later.", ephemeral=True
             )
