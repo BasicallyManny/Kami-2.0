@@ -110,18 +110,12 @@ async def add_coordinate(guild_id: str, coordinate_name: str, coordinate: Minecr
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-#Overwrite route
 @coordinateRouter.put("/coordinates/{guild_id}/{coordinate_name}")
-async def overwrite_coordinate_name(
-    guild_id: str, 
-    coordinate_name: str, 
-    new_coordinate_name: str = Body(..., title="New Coordinate Name")  # Swagger body param
-):
+async def overwrite_coordinate(guild_id: str, coordinate_name: str, coordinate: MinecraftCoordinate):
     """
-    Updates only the name of an existing coordinate in the database.
+    Updates an existing Minecraft coordinate in the database.
     """
     try:
-        # Check if coordinate exists
         existing = MongoConnection.find_one_document(
             DB_NAME, COLLECTION_NAME,
             {"coordinateName": coordinate_name, "guild_id": guild_id}
@@ -130,27 +124,10 @@ async def overwrite_coordinate_name(
         if not existing:
             raise HTTPException(status_code=404, detail="Coordinate not found")
 
-        # Ensure the new name is different
-        if new_coordinate_name == coordinate_name:
-            raise HTTPException(status_code=400, detail="New coordinate name must be different from the current name")
-
-        # Update only the coordinate name (without nesting $set again)
-        modified_count = MongoConnection.update_document(
-            DB_NAME, COLLECTION_NAME,
-            {"coordinateName": coordinate_name, "guild_id": guild_id},
-            {"coordinateName": new_coordinate_name}  # Just the field to update
-        )
-
-        # Check if the document was actually modified
-        if modified_count == 0:
-            raise HTTPException(status_code=400, detail="No changes made to the coordinate")
-
-        return {"message": "Coordinate name updated successfully", "new_name": new_coordinate_name}
-
+        MongoConnection.update_document(DB_NAME, COLLECTION_NAME, {"coordinateName": coordinate_name, "guild_id": guild_id}, coordinate.dict())
+        return coordinate
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
 
 
 #deletecoord: Delete a Minecraft coordinate by its name.

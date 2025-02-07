@@ -78,8 +78,15 @@ class MongoConnection:
         db = self.get_db(db_name)
         collection = db[collection_name]
         return collection.delete_many(filter_query)
-
+    
     def update_document(self, db_name: str, collection_name: str, query: dict, update: dict):
+        """Update a document in a collection"""
+        db = self.get_db(db_name)
+        collection = db[collection_name]
+        result = collection.update_many(query, {"$set": update})
+        return result.modified_count
+
+    def update_document_element(self, db_name: str, collection_name: str, query: dict, update: dict):
         """Update a document in a collection"""
         db = self.get_db(db_name)
         collection = db[collection_name]
