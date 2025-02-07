@@ -95,15 +95,10 @@ async def add_coordinate(guild_id: str, coordinate_name: str, coordinate: Minecr
     try:
         coordinate.guild_id = guild_id
         coordinate.coordinateName = coordinate_name
-        #check if the coordinate already exists
         existing= MongoConnection.find_documents(
             DB_NAME, COLLECTION_NAME,
             {"coordinateName": coordinate.coordinateName, "guild_id": coordinate.guild_id}
         )
-        if existing:
-            raise HTTPException(status_code=409, detail="Coordinate already exists")
-        else:
-            pass
         # Insert Coordinate Details into the database
         MongoConnection.insert_document(DB_NAME, COLLECTION_NAME, coordinate.dict())
         return coordinate
