@@ -1,7 +1,9 @@
 # Defines API endpoints that handle HTTP requests, validate input, and call MongoConnection methods.
 from models.coordinates import MinecraftCoordinate
 from config.connections import MongoConnection
-from typing import List, Optional
+from typing import List
+from fastapi import Body
+
 
 from fastapi import APIRouter, HTTPException # type: ignore
 from dotenv import load_dotenv
@@ -66,22 +68,25 @@ async def get_coordinates_by_guild(guild_name: str):
 
     
 #find: Search for a Minecraft coordinate by its name.
-@coordinateRouter.get("/coordinates/{coordinate_name}", response_model=MinecraftCoordinate)
-async def find_coordinate(coordinate_name: str, guild_id: str = None):
+@coordinateRouter.get("/coordinates/{guild_id}/{coordinate_name}", response_model=MinecraftCoordinate)
+async def get_coordinate(guild_id: str, coordinate_name: str):
     """
     Retrieves a Minecraft coordinate from the database by its name.
     """
     try:
-        coordinate = MongoConnection.find_document(DB_NAME, COLLECTION_NAME, {"coordinateName": coordinate_name, "guild_id": guild_id})
+        coordinate = MongoConnection.find_one_document(
+            DB_NAME, COLLECTION_NAME,
+            {"coordinateName": coordinate_name, "guild_id": guild_id}
+        )
 
         if not coordinate:
-            raise HTTPException(status_code=404, detail="Coordinate not found")
+            raise HTTPException(status_code=404, detail="Coordinate Name not found")
 
         return MinecraftCoordinate(**coordinate)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-#addcoord: Add a new Minecraft coordinate to the database.
+    
+    #addcoord: Add a new Minecraft coordinate to the database.
 @coordinateRouter.post("/coordinates/{guild_id}/{coordinate_name}", response_model=MinecraftCoordinate)
 async def add_coordinate(guild_id: str, coordinate_name: str, coordinate: MinecraftCoordinate):
     """
@@ -90,11 +95,40 @@ async def add_coordinate(guild_id: str, coordinate_name: str, coordinate: Minecr
     try:
         coordinate.guild_id = guild_id
         coordinate.coordinateName = coordinate_name
+        #check if the coordinate already exists
+        existing= MongoConnection.find_documents(
+            DB_NAME, COLLECTION_NAME,
+            {"coordinateName": coordinate.coordinateName, "guild_id": coordinate.guild_id}
+        )
+        if existing:
+            raise HTTPException(status_code=409, detail="Coordinate already exists")
+        else:
+            pass
         # Insert Coordinate Details into the database
         MongoConnection.insert_document(DB_NAME, COLLECTION_NAME, coordinate.dict())
         return coordinate
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@coordinateRouter.put("/coordinates/{guild_id}/{coordinate_name}")
+async def overwrite_coordinate(guild_id: str, coordinate_name: str, coordinate: MinecraftCoordinate):
+    """
+    Updates an existing Minecraft coordinate in the database.
+    """
+    try:
+        existing = MongoConnection.find_one_document(
+            DB_NAME, COLLECTION_NAME,
+            {"coordinateName": coordinate_name, "guild_id": guild_id}
+        )
+
+        if not existing:
+            raise HTTPException(status_code=404, detail="Coordinate not found")
+
+        MongoConnection.update_document(DB_NAME, COLLECTION_NAME, {"coordinateName": coordinate_name, "guild_id": guild_id}, coordinate.dict())
+        return coordinate
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 #deletecoord: Delete a Minecraft coordinate by its name.
 @coordinateRouter.delete("/coordinates/{guild_id}/{coordinate_name}")
@@ -131,10 +165,8 @@ async def clear_coordinates(guild_id: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+    
 
-    
-    
-#updateName (name): Update the name of an already saved coordinate.
 #updateCoord (name): Update the coordinates of an already saved coordinate.
 
     

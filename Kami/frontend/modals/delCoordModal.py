@@ -18,7 +18,6 @@ class DelCoordModal(Modal):
     async def on_submit(self, interaction: discord.Interaction):
         name = self.name.value
         guild_id = interaction.guild.id  # Get the guild ID to identify server-specific coordinates
-        
         # Send DELETE request to FastAPI endpoint
         try:
             async with httpx.AsyncClient() as client:

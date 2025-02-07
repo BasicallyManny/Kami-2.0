@@ -5,6 +5,7 @@ from discord import app_commands
 
 from modals.addCoordModal import AddCoordModal
 from modals.delCoordModal import DelCoordModal 
+from modals.findCoordModal import FindCoordModal
 
 import httpx
 
@@ -187,9 +188,6 @@ class MinecraftAssistantCog(commands.Cog):
                             value=f"**Coordinates: **{coords}\n**Dimension:** {dimension}\n**Saved by: {username}**" ,
                             inline=False
                         )
-                    # Bot's avatar as author icon
-                    bot_avatar = self.bot.user.avatar.url if self.bot.user.avatar else "https://cdn.discordapp.com/embed/avatars/0.png"
-                    embed.set_author(name="Kami", icon_url=bot_avatar)
 
                     return embed
 
@@ -206,7 +204,7 @@ class MinecraftAssistantCog(commands.Cog):
 
                 def check(reaction, user):
                     return user == interaction.user and reaction.message.id == message.id and str(reaction.emoji) in ["⬅️", "➡️"]
-
+                #listen for reactions
                 while True:
                     try:
                         reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
@@ -231,6 +229,13 @@ class MinecraftAssistantCog(commands.Cog):
             )
             await interaction.followup.send(embed=response_embed)
 
+    @app_commands.command(name="find", description="Delete all Minecraft coordinates for the current guild")
+    async def find_coords(self, interaction: discord.Interaction):
+        """Look for a saved coordinates using a modal"""
+        try:
+            await interaction.response.send_modal(FindCoordModal())
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
 # Setup function for loading the cog
 async def setup(bot):
     await bot.add_cog(MinecraftAssistantCog(bot))
