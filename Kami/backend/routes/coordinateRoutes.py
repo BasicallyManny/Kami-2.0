@@ -1,4 +1,5 @@
 # Defines API endpoints that handle HTTP requests, validate input, and call MongoConnection methods.
+from bson import ObjectId
 from models.coordinates import MinecraftCoordinate
 from config.connections import MongoConnection
 from typing import List
@@ -54,8 +55,6 @@ async def get_coordinates_by_guild(guild_name: str):
     try:
         coordinates = MongoConnection.find_documents(DB_NAME, COLLECTION_NAME, {"guild_id": guild_name})
 
-        print(f"📌 Database Response: {coordinates}")  #Debugging log
-
         if not coordinates:  
             return []  #Ensure a list is always returned
 
@@ -68,25 +67,28 @@ async def get_coordinates_by_guild(guild_name: str):
 
     
 #find: Search for a Minecraft coordinate by its name.
-@coordinateRouter.get("/coordinates/{guild_id}/{coordinate_name}", response_model=MinecraftCoordinate)
+@coordinateRouter.get("/coordinates/{guild_id}/{coordinate_name}", response_model=List[MinecraftCoordinate])
 async def get_coordinate(guild_id: str, coordinate_name: str):
     """
     Retrieves a Minecraft coordinate from the database by its name.
     """
     try:
-        coordinate = MongoConnection.find_one_document(
+        coordinate = MongoConnection.find_documents(
             DB_NAME, COLLECTION_NAME,
-            {"coordinateName": coordinate_name, "guild_id": guild_id}
+            {"guild_id": guild_id, "coordinateName": coordinate_name}
         )
 
         if not coordinate:
             raise HTTPException(status_code=404, detail="Coordinate Name not found")
 
-        return MinecraftCoordinate(**coordinate)
+        # Return a list of MinecraftCoordinate instances
+        return [MinecraftCoordinate(**coord) for coord in coordinate]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
     
-    #addcoord: Add a new Minecraft coordinate to the database.
+    
+#addcoord: Add a new Minecraft coordinate to the database.
 @coordinateRouter.post("/coordinates/{guild_id}/{coordinate_name}", response_model=MinecraftCoordinate)
 async def add_coordinate(guild_id: str, coordinate_name: str, coordinate: MinecraftCoordinate):
     """

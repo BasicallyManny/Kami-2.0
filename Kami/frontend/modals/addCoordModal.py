@@ -2,7 +2,7 @@ import discord
 from discord.ui import Modal, TextInput
 import httpx
 
-from modals.confirmOverrideView import ConfirmOverwriteView
+from views.confirmOverrideView import ConfirmOverwriteView
 
 class AddCoordModal(Modal):
     def __init__(self):
