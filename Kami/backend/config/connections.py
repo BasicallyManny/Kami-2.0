@@ -60,10 +60,10 @@ class MongoConnection:
         return str(result.inserted_id)
 
     def find_documents(self, db_name: str, collection_name: str, query: dict):
-        """Retrieve documents from a collection"""
-        db = self.get_db(db_name)
-        collection = db[collection_name]
-        return list(collection.find(query)) 
+        """Retrieve documents from a collection with proper ObjectId handling."""
+        collection = self.get_db(db_name)[collection_name]
+        return list(collection.find(query))
+
 
 
     def delete_document(self, db_name: str, collection_name: str, query: dict):

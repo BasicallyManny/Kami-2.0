@@ -69,22 +69,24 @@ async def get_coordinates_by_guild(guild_name: str):
 #find: Search for a Minecraft coordinate by its name.
 @coordinateRouter.get("/coordinates/{guild_id}/{coordinate_name}", response_model=List[MinecraftCoordinate])
 async def get_coordinate(guild_id: str, coordinate_name: str):
-    """
-    Retrieves a Minecraft coordinate from the database by its name.
-    """
+    """Retrieves a Minecraft coordinate from the database by its name."""
     try:
-        coordinate = MongoConnection.find_documents(
-            DB_NAME, COLLECTION_NAME,
+        coordinates = MongoConnection.find_documents(
+            DB_NAME, 
+            COLLECTION_NAME, 
             {"guild_id": guild_id, "coordinateName": coordinate_name}
         )
-
-        if not coordinate:
+        
+        if not coordinates:
             raise HTTPException(status_code=404, detail="Coordinate Name not found")
-
-        # Return a list of MinecraftCoordinate instances
-        return [MinecraftCoordinate(**coord) for coord in coordinate]
+        
+        # The model will now handle the ObjectId conversion automatically
+        response_data = [MinecraftCoordinate(**coord) for coord in coordinates]
+        return response_data
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
     
     
