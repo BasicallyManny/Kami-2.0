@@ -137,10 +137,11 @@ class ConfirmOverwriteView(discord.ui.View):
                 # Successfully added, so confirm with an embed
                 response_embed = discord.Embed(
                     title="✅ Coordinate Overwritten",
-                    description=f"Coordinate `{selected_coordinate['coordinateName']}` has been successfully overwritten!",
+                    description=f"Coordinate `{selected_coordinate['coordinateName']}` at (`{selected_coordinate['coordinates']['x']}`, `{selected_coordinate['coordinates']['y']}`, `{selected_coordinate['coordinates']['z']}`) has been successfully overwritten!",
+
                     color=discord.Color.green()
                 )
-                await interaction.followup.send(embed=response_embed, ephemeral=True)
+                await interaction.followup.send(embed=response_embed, ephemeral=False)
             else:
                 #Display Success or Failure Message
                 error_message = response.json().get("detail", "Unknown error")
@@ -149,7 +150,7 @@ class ConfirmOverwriteView(discord.ui.View):
                     description=f"Error: {error_message}",
                     color=discord.Color.red()
                 )
-                await interaction.followup.send(embed=response_embed, ephemeral=True)
+                await interaction.followup.send(embed=response_embed, ephemeral=False)
         except Exception as e:
             await interaction.response.send_message(
                 f"❌ Error processing selection: {str(e)}",

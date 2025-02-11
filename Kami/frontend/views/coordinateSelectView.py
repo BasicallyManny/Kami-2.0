@@ -15,7 +15,7 @@ class CoordinateSelect(Select):
             for coord in coordinates
         ]
         
-        super().__init__(placeholder="Select a coordinate to overwrite", options=options)
+        super().__init__(placeholder="Select a Coordinate", options=options)
         self.coordinates = coordinates
         self.callback_function = callback_function
 
