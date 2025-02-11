@@ -3,29 +3,28 @@ import httpx
 from views.coordinateSelectView import CoordinateSelectView 
 
 class ConfirmOverwriteView(discord.ui.View):
-    def __init__(self, data):
+    def __init__(self, data, coordinate_list):
         super().__init__()
         self.data = data
+        self.coordinate_list=coordinate_list
         
     @discord.ui.button(label="Add Anyway", style=discord.ButtonStyle.green)
     async def add_anyway(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Assuming self.data is a list, access the first element for the necessary data
-        coordinate_data = self.data[0]  # Access the first dictionary in the list
 
-        api_url = f"http://localhost:8000/coordinates/{coordinate_data['guild_id']}/{coordinate_data['coordinateName']}"
+        api_url = f"http://localhost:8000/coordinates/{self.data['guild_id']}/{self.data['coordinateName']}"
 
         await interaction.response.defer()  # Deferring the response to avoid timeouts
 
         try:
             # Send the POST request to add the coordinate
             async with httpx.AsyncClient() as client:
-                response = await client.post(api_url, json=coordinate_data)
+                response = await client.post(api_url, json=self.data)
 
             if response.status_code == 200:
                 # Successfully added, so confirm with an embed
                 response_embed = discord.Embed(
                     title="✅ Coordinate Added",
-                    description=f"Coordinate `{coordinate_data['coordinateName']}` has been successfully added!",
+                    description=f"Coordinate `{self.data['coordinateName']}` has been successfully added!",
                     color=discord.Color.green()
                 )
                 response_embed.set_author(
@@ -63,13 +62,13 @@ class ConfirmOverwriteView(discord.ui.View):
 
         try:
             # Ensure self.data is a list and contains valid coordinate dictionaries
-            if not isinstance(self.data, list) or not all(isinstance(coord, dict) for coord in self.data):
+            if not isinstance(self.coordinate_list, list) or not all(isinstance(coord, dict) for coord in self.coordinate_list):
                 await interaction.followup.send("⚠️ Error: Coordinate data is not in the correct format.", ephemeral=True)
                 return
 
             # Create CoordinateSelectView with the coordinate data
             select_view = CoordinateSelectView(
-                coordinates=self.data,
+                coordinates=self.coordinate_list,
                 callback_function=self.handle_coordinate_selection
             )
 
@@ -99,8 +98,6 @@ class ConfirmOverwriteView(discord.ui.View):
                 ephemeral=True
             )
 
-
-
     # Cancel the operation and disable all buttons
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -114,7 +111,7 @@ class ConfirmOverwriteView(discord.ui.View):
         # Update the message to reflect the disabled buttons
         await interaction.message.edit(view=self)
         
-    #OVERWRITE THE SELECTED COORDINATE IF OVERWRITE IS PRESSED
+     #OVERWRITE THE SELECTED COORDINATE IF OVERWRITE IS PRESSED
     async def handle_coordinate_selection(self, interaction: discord.Interaction, selected_coordinate):
         """
         Callback function to handle coordinate selection.
@@ -127,9 +124,32 @@ class ConfirmOverwriteView(discord.ui.View):
                 f"Processing overwrite for coordinate: {selected_coordinate['coordinateName']}",
                 ephemeral=True
             )
+            print(f"selectedCoordinate: {selected_coordinate}")
+            print(f"self.data: {self.data}")
             
             # Add your overwrite logic here
+            api_url = f"http://localhost:8000/coordinates/{selected_coordinate['guild_id']}/{selected_coordinate['coordinateName']}"
+            #Call fastAPI endpoint to overwrite Coordinate
+            async with httpx.AsyncClient() as client:
+                response = await client.put(api_url, json=self.data)
             
+            if response.status_code == 200:
+                # Successfully added, so confirm with an embed
+                response_embed = discord.Embed(
+                    title="✅ Coordinate Overwritten",
+                    description=f"Coordinate `{selected_coordinate['coordinateName']}` has been successfully overwritten!",
+                    color=discord.Color.green()
+                )
+                await interaction.followup.send(embed=response_embed, ephemeral=True)
+            else:
+                #Display Success or Failure Message
+                error_message = response.json().get("detail", "Unknown error")
+                response_embed = discord.Embed(
+                    title="⚠️ Error Overwriting Coordinate",
+                    description=f"Error: {error_message}",
+                    color=discord.Color.red()
+                )
+                await interaction.followup.send(embed=response_embed, ephemeral=True)
         except Exception as e:
             await interaction.response.send_message(
                 f"❌ Error processing selection: {str(e)}",

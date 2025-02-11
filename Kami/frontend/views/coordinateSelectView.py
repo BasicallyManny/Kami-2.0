@@ -29,6 +29,16 @@ class CoordinateSelect(Select):
                                and coord['guild_id'] == guild_id 
                                and coord['coordinateName'] == coordinate_name)
 
+        # Get the parent view
+        view: CoordinateSelectView = self.view
+
+        # Disable the cancel button
+        for item in view.children:
+            if isinstance(item, CancelButton):
+                item.disabled = True
+
+        await interaction.message.edit(view=view)
+
         if self.callback_function:
             await self.callback_function(interaction, selected_coordinate)
 

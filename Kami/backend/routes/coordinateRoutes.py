@@ -99,17 +99,14 @@ async def add_coordinate(guild_id: str, coordinate_name: str, coordinate: Minecr
     try:
         coordinate.guild_id = guild_id
         coordinate.coordinateName = coordinate_name
-        existing= MongoConnection.find_documents(
-            DB_NAME, COLLECTION_NAME,
-            {"coordinateName": coordinate.coordinateName, "guild_id": coordinate.guild_id}
-        )
         # Insert Coordinate Details into the database
         MongoConnection.insert_document(DB_NAME, COLLECTION_NAME, coordinate.dict())
         return coordinate
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@coordinateRouter.put("/coordinates/{guild_id}/{coordinate_name}")
+#updatecoord: Update an existing Minecraft coordinate in the database.
+@coordinateRouter.put("/coordinates/{guild_id}/{coordinate_name}", response_model=MinecraftCoordinate)
 async def overwrite_coordinate(guild_id: str, coordinate_name: str, coordinate: MinecraftCoordinate):
     """
     Updates an existing Minecraft coordinate in the database.
@@ -123,7 +120,7 @@ async def overwrite_coordinate(guild_id: str, coordinate_name: str, coordinate: 
         if not existing:
             raise HTTPException(status_code=404, detail="Coordinate not found")
 
-        MongoConnection.update_document(DB_NAME, COLLECTION_NAME, {"coordinateName": coordinate_name, "guild_id": guild_id}, coordinate.dict())
+        MongoConnection.update_document_element(DB_NAME, COLLECTION_NAME, {"coordinateName": coordinate_name, "guild_id": guild_id}, coordinate.dict())
         return coordinate
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
