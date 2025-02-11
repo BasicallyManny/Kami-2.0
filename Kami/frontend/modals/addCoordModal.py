@@ -88,12 +88,14 @@ class AddCoordModal(Modal):
             
             async with httpx.AsyncClient() as client:
                 response = await client.get(api_url)
+            
+            #response DData for list of coorinates
+            coordinate_list= response.json()
                 
-            response_data = response.json()
             if response.status_code == 200:  # Coordinate with the same name exists
-                overwrite_view = ConfirmOverwriteView(response_data)
+                overwrite_view = ConfirmOverwriteView(data, coordinate_list)
                 await interaction.followup.send(
-                    "A coordinate with this name already exists. Would you like to overwrite it, rename it, or cancel?",
+                    "A coordinate with this name already exists. Would you like to overwrite it, add anyway, or cancel the operation?",
                     view=overwrite_view
                 )
                 return
