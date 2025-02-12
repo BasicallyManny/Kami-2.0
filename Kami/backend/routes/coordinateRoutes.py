@@ -124,6 +124,55 @@ async def overwrite_coordinate(guild_id: str, coordinate_name: str, coordinate: 
         return coordinate
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+#updateCoord (name): Update the name coordinates of an already saved coordinate.
+# Rename only: use PATCH for partial update
+@coordinateRouter.patch("/coordinates/{guild_id}/{coordinate_name}")
+async def overwrite_coordinate_name(
+    guild_id: str, coordinate_name: str, new_name: str
+):
+    """
+    Updates an existing Minecraft coordinate's name in the database, targeting only the coordinateName.
+    The new coordinate name is provided as a string in the request body.
+    """
+    try:
+        # Fetch the existing coordinate based on coordinateName and guild_id
+        existing = MongoConnection.find_one_document(
+            DB_NAME, COLLECTION_NAME,
+            {"coordinateName": coordinate_name, "guild_id": guild_id}
+        )
+
+        if not existing:
+            raise HTTPException(status_code=404, detail="Coordinate not found")
+
+        # Check if the new name already exists in the same guild
+        name_exists = MongoConnection.find_one_document(
+            DB_NAME, COLLECTION_NAME,
+            {"coordinateName": new_name, "guild_id": guild_id}
+        )
+
+        if name_exists:
+            raise HTTPException(status_code=400, detail=f"Coordinate name '{new_name}' already exists.")
+
+        # Update the coordinate's name
+        modified_count = MongoConnection.update_document_name(
+            DB_NAME, COLLECTION_NAME,
+            {"coordinateName": coordinate_name, "guild_id": guild_id},
+            new_name
+        )
+
+        if modified_count == 0:
+            raise HTTPException(status_code=400, detail="Update failed. No changes made.")
+
+        return {"message": f"Coordinate '{coordinate_name}' updated to '{new_name}' successfully."}
+
+    except HTTPException as e:
+        # Re-raise the HTTPException if caught
+        raise e
+    except Exception as e:
+        # Catch unexpected errors and raise an HTTPException with a server error status
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+
 
 
 #deletecoord: Delete a Minecraft coordinate by its name.
@@ -163,8 +212,9 @@ async def clear_coordinates(guild_id: str):
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
     
 
-#updateCoord (name): Update the coordinates of an already saved coordinate.
 
+#updateCoord (location): Update the location of an already saved coordinate.
+#updateCoord Dimension (name): Update the name of an already saved coordinate.
     
 
 

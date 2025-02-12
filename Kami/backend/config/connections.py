@@ -92,6 +92,21 @@ class MongoConnection:
         collection = db[collection_name]
         result = collection.update_one(query, {"$set": update})
         return result.modified_count
+    def update_document_name(self, db_name: str, collection_name: str, query: dict, new_name: str):
+        """Update the coordinate name in a collection by targeting only the coordinateName field."""
+        db = self.get_db(db_name)
+        collection = db[collection_name]
+    
+        # Update the coordinate's name only
+        result = collection.update_one(query, {"$set": {"coordinateName": new_name}})
+    
+        if result.modified_count > 0:
+            return result.modified_count
+        else:
+            print(f"⚠️ Update failed: No document matched query {query} or name is the same.")
+            return 0  # Explicitly return 0 if no document was updated
+
+    
     
     def find_one_document(self, db_name: str, collection_name: str, query: dict):
         """Find a single document in a collection based on the query"""

@@ -6,6 +6,7 @@ from discord import app_commands
 from modals.addCoordModal import AddCoordModal
 from modals.delCoordModal import DelCoordModal 
 from modals.findCoordModal import FindCoordModal
+from modals.renameCoordinateModal import RenameCoordModal
 
 import httpx
 
@@ -54,10 +55,10 @@ class MinecraftAssistantCog(commands.Cog):
             "- **/deletecoord**: Delete a Minecraft coordinate by its name.",
             "- **/clearcoords**: Clear all Minecraft coordinates for the current guild.",
             "- **/findcoord**: Search for a Minecraft coordinate by its name.",
-            "- **/updateName (name)**: Update the name of an already saved coordinate.",
+            "- **/rename (name)**: Update the name of an already saved coordinate.",
             "- **/updateCoord (name)**: Update the coordinates of an already saved coordinate.",
             "- **/listcoords**: Retrieve all Minecraft coordinates for the current guild."
-        ]
+        ]    
         
         commands_Embed = discord.Embed(
             title="**Commands**",
@@ -234,6 +235,14 @@ class MinecraftAssistantCog(commands.Cog):
         """Look for a saved coordinates using a modal"""
         try:
             await interaction.response.send_modal(FindCoordModal())
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+            
+    @app_commands.command(name="rename", description="Add a Minecraft coordinate using a modal")
+    async def update_name(self, interaction: discord.Interaction):
+        """ Update the Name of a already saved Coordinate"""
+        try:
+            await interaction.response.send_modal(RenameCoordModal())
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
             

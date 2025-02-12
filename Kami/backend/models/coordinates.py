@@ -33,7 +33,7 @@ class MinecraftCoordinate(BaseModel):
     user_id: str
     username: str
     avatar_url: Optional[str] = None
-    coordinateName: str
+    coordinateName: str = Field(..., min_length=1, max_length=100)
     coordinates: CoordinateDetails
     dimension: str
     created_at: datetime
