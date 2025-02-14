@@ -50,9 +50,6 @@ async def root():
                 <ul>
                     <li><a href="/openapi.json">OpenAPI Schema</a></li>
                     <li><a href="/docs">Swagger UI Docs</a></li>
-                    <li><a href="/coordinates">Get All Coordinates (GET)</a></li>
-                    <li><a href="/coordinates/{name}">Add Coordinate to Coordinates (POST)</a></li>
-                    <li><a href="/coordinates/{name}">Delete Coordinate (DELETE)</a></li>
                 </ul>
             </body>
         </html>
