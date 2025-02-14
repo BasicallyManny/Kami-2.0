@@ -41,6 +41,8 @@ class CoordinateSelect(Select):
 
         if self.callback_function:
             await self.callback_function(interaction, selected_coordinate)
+        else:
+            print("[ERROR] No callback function set for CoordinateSelect.")
 
 class CancelButton(Button):
     def __init__(self):
