@@ -50,14 +50,12 @@ class MinecraftAssistantCog(commands.Cog):
     async def commands(self, ctx):
         "List all commands"
         coordinate_commands = [
-            "- **/addcoord**: Save a Minecraft coordinate.",
+            "- **/addcoord**: Save a Minecraft coordinate or overwrite already saved coordinates.",
             "- **/deletecoord**: Delete a Minecraft coordinate by its name.",
             "- **/clearcoords**: Clear all Minecraft coordinates for the current guild.",
-            "- **/find**: Search for a Minecraft coordinate by its name.",
-            "- **/updateName (name)**: Update the name of an already saved coordinate.",
-            "- **/updateCoord (name)**: Update the coordinates of an already saved coordinate.",
+            "- **/findcoord**: Search for a Minecraft coordinate by its name.",
             "- **/listcoords**: Retrieve all Minecraft coordinates for the current guild."
-        ]
+        ]    
         
         commands_Embed = discord.Embed(
             title="**Commands**",
@@ -229,13 +227,16 @@ class MinecraftAssistantCog(commands.Cog):
             )
             await interaction.followup.send(embed=response_embed)
 
-    @app_commands.command(name="find", description="Delete all Minecraft coordinates for the current guild")
+    @app_commands.command(name="findcoord", description="List all the coordinates with a specific name") 
     async def find_coords(self, interaction: discord.Interaction):
         """Look for a saved coordinates using a modal"""
         try:
             await interaction.response.send_modal(FindCoordModal())
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+            
+        
+            
 # Setup function for loading the cog
 async def setup(bot):
     await bot.add_cog(MinecraftAssistantCog(bot))

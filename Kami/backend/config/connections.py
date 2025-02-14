@@ -92,6 +92,26 @@ class MongoConnection:
         collection = db[collection_name]
         result = collection.update_one(query, {"$set": update})
         return result.modified_count
+    # Update the MongoDB helper method to return the updated document
+    def update_and_return_document(self, db_name: str, collection_name: str, query: dict, update_fields: dict):
+        """
+        Update multiple fields in a document and return the updated document.
+
+        """
+        db = self.get_db(db_name)
+        collection = db[collection_name]
+    
+        result = collection.find_one_and_update(
+            query,
+            {"$set": update_fields},
+            return_document=True  # Return the document after the update
+        )
+    
+        if not result:
+            print(f"⚠️ Update failed: No document matched query {query} or no changes were needed.")
+            return None
+        
+        return result
     
     def find_one_document(self, db_name: str, collection_name: str, query: dict):
         """Find a single document in a collection based on the query"""

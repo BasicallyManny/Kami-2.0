@@ -6,7 +6,7 @@ from datetime import datetime
 class CoordinateDetails(BaseModel):
     x: int
     y: int
-    z: int
+    z: int 
 
 # Add PyObjectId for proper BSON ObjectID handling
 class PyObjectId(ObjectId):
@@ -23,7 +23,12 @@ class PyObjectId(ObjectId):
     @classmethod
     def __modify_schema__(cls, field_schema):
         field_schema.update(type="string")
-
+        
+class CoordinateUpdatePayload(BaseModel):
+    new_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    coordinates: Optional[CoordinateDetails] = None
+    dimension: Optional[str] = Field(None, min_length=1, max_length=100)
+    
 class MinecraftCoordinate(BaseModel):
     """Pydantic model for Minecraft coordinate data."""
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
@@ -33,7 +38,7 @@ class MinecraftCoordinate(BaseModel):
     user_id: str
     username: str
     avatar_url: Optional[str] = None
-    coordinateName: str
+    coordinateName: str = Field(..., min_length=1, max_length=100)
     coordinates: CoordinateDetails
     dimension: str
     created_at: datetime
