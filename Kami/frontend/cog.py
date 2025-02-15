@@ -7,6 +7,7 @@ from modals.addCoordModal import AddCoordModal
 from modals.delCoordModal import DelCoordModal 
 from modals.findCoordModal import FindCoordModal
 
+from backend.minecraft_assistant.chatbot import generate_response
 import httpx
 
 # Define the Minecraft Assistant Cog
@@ -65,8 +66,12 @@ class MinecraftAssistantCog(commands.Cog):
         commands_Embed.add_field(name="__⚙️ Coordinate Commands__", value="\n".join(coordinate_commands), inline=False)
         commands_Embed.add_field(name="\u200b", value="\u200b", inline=False)
         commands_Embed.add_field(name="__🤖 AI Commands__", value=( 
-            "- **ask**: Ask a Minecraft-related question.\n"
-            "- **clearContext**: Clear the context of the AI.\n"
+            "- **/askkami**: Ask a Minecraft-related question and Kami will search the Web in seconds to answer your question.\n"
+            "**WARNING**: This command is not perfect and is still in development. Key issues incklude:\n"
+            "     1. Kami is great at saving data but when it comes to searching the web hes still learning.\n"
+            "     2. Kami suffers from short term memory loss. He will forget everything every 30 minutes.\n"
+            "     3. Kami can't hold long conversations.\n"
+            
             ), inline=False)    
             
         await ctx.send(embed=commands_Embed)
@@ -234,6 +239,17 @@ class MinecraftAssistantCog(commands.Cog):
             await interaction.response.send_modal(FindCoordModal())
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+            
+    @app_commands.command(name="askkami", description="Ask Kami a question about Minecraft")
+    async def ask_kami(self, interaction: discord.Interaction, prompt: str):
+        """Ask Kami a question about Minecraft"""
+        chat_session_token = interaction.user.id
+        try:
+            response = await generate_response(prompt, chat_session_token)
+            await interaction.response.send_message(response, ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+        return
             
         
             
