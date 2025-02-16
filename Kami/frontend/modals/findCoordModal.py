@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+
 import discord
 from discord.ui import Modal, TextInput
 import httpx
@@ -5,7 +8,10 @@ import httpx
 class FindCoordModal(Modal):
     def __init__(self):
         super().__init__(title="Find Coordinate")
-
+        
+        load_dotenv()
+        self.API_URL = os.getenv('API_URL')
+        
         self.name = TextInput(
             label="Coordinate Name", 
             placeholder="Enter the name of the coordinate to find", 
@@ -21,7 +27,7 @@ class FindCoordModal(Modal):
         
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(f"http://localhost:8000/coordinates/{guild_id}/{name}")
+                response = await client.get(f"{self.API_URL}/coordinates/{guild_id}/{name}")
                 coordinates = response.json()
 
                 if not coordinates:
@@ -54,7 +60,7 @@ class FindCoordModal(Modal):
         except Exception as e:
             error_embed = discord.Embed(
                 title="⚠️ Error",
-                description=f"An unexpected error occurred: `{str(e)}`",
+                description=f"❌ Coordinate Not Found",
                 color=discord.Color.red()
             )
             await interaction.response.send_message(embed=error_embed, ephemeral=True)

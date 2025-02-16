@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+
 import discord
 from discord.ui import Modal, TextInput
 import httpx
@@ -6,7 +9,10 @@ from views.coordinateSelectView import CoordinateSelectView
 class DelCoordModal(Modal):
     def __init__(self):
         super().__init__(title="Delete Coordinate")
-
+        
+        load_dotenv()
+        self.API_URL = os.getenv('API_URL')
+        
         self.name = TextInput(
             label="Coordinate Name", 
             placeholder="Enter the name of the coordinate to remove", 
@@ -16,13 +22,14 @@ class DelCoordModal(Modal):
         
         self.add_item(self.name)
         
+        
     async def on_submit(self, interaction: discord.Interaction):
         name = self.name.value
         guild_id = interaction.guild.id  # Get the guild ID to identify server-specific coordinates
         
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(f"http://localhost:8000/coordinates/{guild_id}/{name}")
+                response = await client.get(f"{self.API_URL}/coordinates/{guild_id}/{name}")
                 coordinates = response.json()
 
                 if not coordinates:
@@ -38,7 +45,7 @@ class DelCoordModal(Modal):
                     # Only one coordinate found, delete it directly
                     async with httpx.AsyncClient() as client:
                         response = await client.delete(
-                            f"http://localhost:8000/coordinates/{coordinates[0]['guild_id']}/{coordinates[0]['coordinateName']}"
+                            f"{self.API_URL}/coordinates/{coordinates[0]['guild_id']}/{coordinates[0]['coordinateName']}"
                         )
 
                     if response.status_code == 200:
@@ -89,7 +96,7 @@ class DelCoordModal(Modal):
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.delete(
-                    f"http://localhost:8000/coordinates/{selected_coordinate['guild_id']}/{selected_coordinate['coordinateName']}"
+                    f"{self.API_URL}/coordinates/{selected_coordinate['guild_id']}/{selected_coordinate['coordinateName']}"
                 )
 
             if response.status_code == 200:

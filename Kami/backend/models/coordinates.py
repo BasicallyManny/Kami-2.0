@@ -2,7 +2,6 @@ from bson import ObjectId
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
-from enum import Enum
 
 
 class CoordinateDetails(BaseModel):
@@ -10,14 +9,6 @@ class CoordinateDetails(BaseModel):
     x: int
     y: int
     z: int
-
-
-class DimensionEnum(str, Enum):
-    """Enum for valid Minecraft dimensions."""
-    OVERWORLD = "Overworld"
-    NETHER = "Nether"
-    END = "End"
-
 
 # Custom ObjectId type for Pydantic v2
 class PyObjectId(ObjectId):
@@ -45,7 +36,7 @@ class CoordinateUpdatePayload(BaseModel):
     """Model for updating Minecraft coordinate entries."""
     new_name: Optional[str] = Field(None, min_length=1, max_length=100)
     coordinates: Optional[CoordinateDetails] = None
-    dimension: Optional[DimensionEnum] = None  # Restricts to valid dimensions
+    dimension: Optional[str] = None  # Restricts to valid dimensions
 
 
 class MinecraftCoordinate(BaseModel):
@@ -59,7 +50,7 @@ class MinecraftCoordinate(BaseModel):
     avatar_url: Optional[str] = None
     coordinateName: str = Field(..., min_length=1, max_length=100)
     coordinates: CoordinateDetails
-    dimension: DimensionEnum
+    dimension: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = ConfigDict(

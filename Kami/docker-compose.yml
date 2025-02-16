@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - mongoConnectionString=${mongoConnectionString}  # MongoDB URI from .env
+      - discordbotToken=${discordbotToken}  # Discord token from .env
+      - OPENAI_API_KEY=${OPENAI_API_KEY}  # OpenAI API key from .env
+      - TAVILYAI_API_KEY = ${TAVILYAI_API_KEY}  # Tavily.ai API key from .env
+    ports:
+      - "8000:8000"  # Expose FastAPI on port 8000
+    networks:
+      - kami-net
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - mongoConnectionString=${mongoConnectionString}  # MongoDB URI from .env
+      - discordbotToken=${discordbotToken}  # Discord token from .env
+      - OPENAI_API_KEY=${OPENAI_API_KEY}  # OpenAI API key from .env
+      - TAVILYAI_API_KEY = ${TAVILYAI_API_KEY}  # Tavily.ai API key from .env
+    networks:
+      - kami-net
+    restart: always
+
+networks:
+  kami-net:
+    driver: bridge
