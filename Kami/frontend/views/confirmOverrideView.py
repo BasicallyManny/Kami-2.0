@@ -1,6 +1,10 @@
+import os
+from dotenv import load_dotenv
 import discord
 import httpx
-from views.coordinateSelectView import CoordinateSelectView 
+
+from views.coordinateSelectView import CoordinateSelectView
+
 
 class ConfirmOverwriteView(discord.ui.View):
     def __init__(self, data, coordinate_list):
@@ -8,10 +12,13 @@ class ConfirmOverwriteView(discord.ui.View):
         self.data = data
         self.coordinate_list=coordinate_list
         
+        load_dotenv()
+        self.API_URL = os.getenv('API_URL') 
+        
     @discord.ui.button(label="Add Anyway", style=discord.ButtonStyle.green)
     async def add_anyway(self, interaction: discord.Interaction, button: discord.ui.Button):
 
-        api_url = f"http://localhost:8000/coordinates/{self.data['guild_id']}/{self.data['coordinateName']}"
+        api_url = f"{self.API_URL}/coordinates/{self.data['guild_id']}/{self.data['coordinateName']}"
 
         await interaction.response.defer()  # Deferring the response to avoid timeouts
 
@@ -128,7 +135,7 @@ class ConfirmOverwriteView(discord.ui.View):
             print(f"self.data: {self.data}")
             
             # Add your overwrite logic here
-            api_url = f"http://localhost:8000/coordinates/{selected_coordinate['guild_id']}/{selected_coordinate['coordinateName']}"
+            api_url = f"{self.API_URL}/coordinates/{selected_coordinate['guild_id']}/{selected_coordinate['coordinateName']}"
             #Call fastAPI endpoint to overwrite Coordinate
             async with httpx.AsyncClient() as client:
                 response = await client.put(api_url, json=self.data)

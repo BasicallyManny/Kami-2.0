@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+
 import discord
 from discord.ui import Modal, TextInput
 import httpx
@@ -8,6 +11,9 @@ from views.confirmOverrideView import ConfirmOverwriteView
 class AddCoordModal(Modal):
     def __init__(self):
         super().__init__(title="Add Coordinate")
+        
+        load_dotenv()
+        self.API_URL = os.getenv('API_URL')
 
         self.name = TextInput(
             label="Name", 
@@ -84,7 +90,7 @@ class AddCoordModal(Modal):
         # Check if coordinate name exists
         try:
             await interaction.response.defer()
-            api_url = f"http://localhost:8000/coordinates/{interaction.guild.id}/{name}"
+            api_url = f"{self.API_URL}/coordinates/{interaction.guild.id}/{name}"
             
             async with httpx.AsyncClient() as client:
                 response = await client.get(api_url)
@@ -102,7 +108,7 @@ class AddCoordModal(Modal):
 
             # Send POST request to FastAPI endpoint (only if name is not taken)
             async with httpx.AsyncClient() as client:
-                response = await client.post(f"http://localhost:8000/coordinates/{interaction.guild.id}/{name}", json=data)
+                response = await client.post(f"{self.API_URL}/coordinates/{interaction.guild.id}/{name}", json=data)
 
             # Handle response
             if response.status_code == 200:

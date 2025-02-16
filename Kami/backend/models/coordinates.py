@@ -1,18 +1,29 @@
 from bson import ObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 
+
 class CoordinateDetails(BaseModel):
+    """Represents Minecraft coordinate details."""
     x: int
     y: int
-    z: int 
+    z: int
 
-# Add PyObjectId for proper BSON ObjectID handling
+# Custom ObjectId type for Pydantic v2
 class PyObjectId(ObjectId):
     @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+    def __get_pydantic_core_schema__(cls, *args, **kwargs):
+        from pydantic_core import core_schema
+
+        return core_schema.chain_schema([
+            core_schema.str_schema(),
+            core_schema.no_info_plain_validator_function(cls.validate),
+            core_schema.json_or_python_schema(
+                json_schema=core_schema.str_schema(),
+                python_schema=core_schema.no_info_plain_validator_function(cls.validate),
+            ),
+        ])
 
     @classmethod
     def validate(cls, v):
@@ -20,18 +31,17 @@ class PyObjectId(ObjectId):
             raise ValueError("Invalid ObjectId")
         return ObjectId(v)
 
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
-        
+
 class CoordinateUpdatePayload(BaseModel):
+    """Model for updating Minecraft coordinate entries."""
     new_name: Optional[str] = Field(None, min_length=1, max_length=100)
     coordinates: Optional[CoordinateDetails] = None
-    dimension: Optional[str] = Field(None, min_length=1, max_length=100)
-    
+    dimension: Optional[str] = None  # Restricts to valid dimensions
+
+
 class MinecraftCoordinate(BaseModel):
     """Pydantic model for Minecraft coordinate data."""
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    id: PyObjectId = Field(default_factory=ObjectId, alias="_id")
     guild_id: str
     guild_name: str
     channel_id: str
@@ -41,12 +51,12 @@ class MinecraftCoordinate(BaseModel):
     coordinateName: str = Field(..., min_length=1, max_length=100)
     coordinates: CoordinateDetails
     dimension: str
-    created_at: datetime
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        populate_by_name = True
-        json_encoders = {
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_encoders={
             ObjectId: str,
             datetime: lambda v: v.isoformat()
         }
-        allow_population_by_field_name = True
+    )

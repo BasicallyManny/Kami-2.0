@@ -1,5 +1,8 @@
 import asyncio
 import discord
+
+from dotenv import load_dotenv
+import os
 from discord.ext import commands
 from discord import app_commands
 
@@ -14,6 +17,11 @@ import httpx
 class MinecraftAssistantCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        #get API ENDPOINT URL
+        # Load environment variables from the .env file
+        load_dotenv()
+        # Get the base URL from the environment variable
+        self.API_URL = os.getenv('API_URL')
     
     @commands.Cog.listener()
     async def on_ready(self):
@@ -101,11 +109,12 @@ class MinecraftAssistantCog(commands.Cog):
         """
         Clear all Minecraft coordinates for the current guild
         """
+        print(f"{self.API_URL}")
         await interaction.response.defer()  # Defer response to prevent timeout
 
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.delete(f"http://localhost:8000/coordinates/{interaction.guild.id}")
+                response = await client.delete(f"{self.API_URL}/coordinates/{interaction.guild.id}")
 
             # Check Response from FastAPI
             if response.status_code == 200:
@@ -145,7 +154,7 @@ class MinecraftAssistantCog(commands.Cog):
 
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(f"http://localhost:8000/coordinates/{interaction.guild.id}")
+                response = await client.get(f"{self.API_URL}/coordinates/{interaction.guild.id}")
 
             if response.status_code == 200:
                 coordinates = response.json()
