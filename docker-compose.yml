@@ -5,47 +5,28 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: kami-backend
     restart: always
     env_file:
       - .env
     ports:
-      - "8000:8000"
+      - "${PORT}:8000"
     volumes:
       - ./backend:/app
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-    depends_on:
-      - mongodb
 
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    container_name: kami-bot
     restart: always
     env_file:
       - .env
     volumes:
       - ./frontend:/app/frontend
-      - ./backend:/app/backend  # Include backend
+      - ./backend:/app/backend
     depends_on:
       - backend
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
     command: python -m frontend.kami
-
-
-  mongodb:
-    image: mongo:latest
-    container_name: kami-mongo
-    restart: always
-    ports:
-      - "27017:27017"
-    env_file:
-      - .env
-    volumes:
-      - mongodb_data:/data/db
-
-volumes:
-  mongodb_data:
