@@ -3,32 +3,48 @@ version: "3.8"
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    environment:
-      - mongoConnectionString=${mongoConnectionString}  # MongoDB URI from .env
-      - discordbotToken=${discordbotToken}  # Discord token from .env
-      - OPENAI_API_KEY=${OPENAI_API_KEY}  # OpenAI API key from .env
-      - TAVILYAI_API_KEY = ${TAVILYAI_API_KEY}  # Tavily.ai API key from .env
-    ports:
-      - "8000:8000"  # Expose FastAPI on port 8000
-    networks:
-      - kami-net
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: kami-backend
     restart: always
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - mongodb
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    environment:
-      - mongoConnectionString=${mongoConnectionString}  # MongoDB URI from .env
-      - discordbotToken=${discordbotToken}  # Discord token from .env
-      - OPENAI_API_KEY=${OPENAI_API_KEY}  # OpenAI API key from .env
-      - TAVILYAI_API_KEY = ${TAVILYAI_API_KEY}  # Tavily.ai API key from .env
-    networks:
-      - kami-net
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: kami-bot
     restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./frontend:/app/frontend
+      - ./backend:/app/backend  # Include backend
+    depends_on:
+      - backend
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    command: python -m frontend.kami
 
-networks:
-  kami-net:
-    driver: bridge
+
+  mongodb:
+    image: mongo:latest
+    container_name: kami-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    env_file:
+      - .env
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
