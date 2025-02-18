@@ -52,4 +52,15 @@ To solve the backend logic, develop front-end APIs to interact with and
       that handle a variety of data types.
     - To store user information, server information, and Minecraft coordinates.
 
+**Notice:** 
+
+RUNNING THE BOT USING THE DOCKER IMAGE WILL NOT WORK AS THE LANGCHAIN API RESPONSE FEATURE IS STILL IN DEVELOPMENT. PLEASE RUN THE BOT LOCALLY.
+- Run the backend:
+   1. cd backend
+   2. uvicorn main:app --reload
+-  Run the frontend
+   1. In the root directory: python -m frontend.kami
+- You need to have your own Discord and Open AI Tokens to run
+
+
 
