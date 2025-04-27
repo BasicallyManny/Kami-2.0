@@ -9,8 +9,6 @@ from discord import app_commands
 from modals.addCoordModal import AddCoordModal
 from modals.delCoordModal import DelCoordModal 
 from modals.findCoordModal import FindCoordModal
-
-from backend.minecraft_assistant.chatbot import generate_response
 import httpx
 
 # Define the Minecraft Assistant Cog
@@ -249,16 +247,16 @@ class MinecraftAssistantCog(commands.Cog):
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
             
-    @app_commands.command(name="askkami", description="Ask Kami a question about Minecraft")
-    async def ask_kami(self, interaction: discord.Interaction, prompt: str):
-        """Ask Kami a question about Minecraft"""
-        chat_session_token = interaction.user.id
-        try:
-            response = await generate_response(prompt, chat_session_token)
-            await interaction.response.send_message(response, ephemeral=True)
-        except Exception as e:
-            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
-        return
+    # @app_commands.command(name="askkami", description="Ask Kami a question about Minecraft")
+    # async def ask_kami(self, interaction: discord.Interaction, prompt: str):
+    #     """Ask Kami a question about Minecraft"""
+    #     chat_session_token = interaction.user.id
+    #     try:
+    #         response = await generate_response(prompt, chat_session_token)
+    #         await interaction.response.send_message(response, ephemeral=True)
+    #     except Exception as e:
+    #         await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+    #     return
             
         
             

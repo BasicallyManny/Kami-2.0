@@ -11,6 +11,10 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # Load environment variables
 load_dotenv()
 DiscordToken = os.getenv("discordbotToken")
+if DiscordToken is None:
+    raise ValueError("discordbotToken is not set in environment!")
+
+DiscordToken = DiscordToken.strip()
 
 # Bot Class
 class Kami(commands.Bot):
@@ -34,8 +38,8 @@ class Kami(commands.Bot):
         """Load all cogs asynchronously."""
         COG_DIRECTORY = os.path.dirname(__file__)  # Same directory as kami.py
         for filename in os.listdir(COG_DIRECTORY):
-            if filename.endswith(".py") and filename != "__init__.py" and filename != "kami.py":
-                cog_name = f"frontend.{filename[:-3]}"  # Update to use bot as the module prefix
+            if filename.endswith(".py") and filename not in ("__init__.py", "kami.py"):
+                cog_name = filename[:-3]  # <-- No "frontend."
                 try:
                     await self.load_extension(cog_name)
                     print(f"Loaded cog: {cog_name}")
@@ -52,8 +56,25 @@ client = Kami(command_prefix="-", intents=intents)
 # Main Function
 async def main():
     async with client:
-        await client.load_cogs()
-        await client.start(DiscordToken)
+        try:
+            await client.load_cogs()  # Load cogs before starting the bot
+        except Exception as e:
+            print(f"Error loading cogs: {e}")
+            return
+        try:
+            await client.start(DiscordToken)
+        except discord.LoginFailure as e:
+            print(f"Login failed: {e}")
+            print("Invalid token provided. Please check your .env file.")
+            return
+        except discord.HTTPException as e:
+            print(f"HTTP error occurred: {e}")
+            return
+        except Exception as e:
+            print(f"An error occurred while starting the bot: {e}")
+            return
+        
+           
 
 # Run the Bot
 if __name__ == "__main__":

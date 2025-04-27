@@ -30,7 +30,6 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI app and register lifespan context manager
 app = FastAPI(lifespan=lifespan)
-# ✅ Register the router (this adds all routes from routes.py)
 app.include_router(coordinateRouter)
 
 @app.get("/", response_class=HTMLResponse, tags=["Home"])
