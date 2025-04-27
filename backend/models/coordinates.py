@@ -34,9 +34,9 @@ class PyObjectId(ObjectId):
 
 class CoordinateUpdatePayload(BaseModel):
     """Model for updating Minecraft coordinate entries."""
-    new_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    coordinateName: Optional[str] = Field(None, min_length=1, max_length=100)
     coordinates: Optional[CoordinateDetails] = None
-    dimension: Optional[str] = None  # Restricts to valid dimensions
+    dimension: Optional[str] = None 
 
 
 class MinecraftCoordinate(BaseModel):

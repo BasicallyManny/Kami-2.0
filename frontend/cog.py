@@ -9,6 +9,7 @@ from discord import app_commands
 from modals.addCoordModal import AddCoordModal
 from modals.delCoordModal import DelCoordModal 
 from modals.findCoordModal import FindCoordModal
+from modals.updateCoordModal import UpdateCoordModal
 import httpx
 
 # Define the Minecraft Assistant Cog
@@ -244,6 +245,16 @@ class MinecraftAssistantCog(commands.Cog):
         """Look for a saved coordinates using a modal"""
         try:
             await interaction.response.send_modal(FindCoordModal())
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+            
+    @app_commands.command(name="updatecoord", description="Update a Minecraft coordinate using a modal")
+    async def update_coord(self, interaction: discord.Interaction):
+        """
+        Update a Minecraft coordinate using a modal
+        """
+        try:
+            await interaction.response.send_modal(UpdateCoordModal())
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
             

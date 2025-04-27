@@ -7,7 +7,7 @@ from dotenv import load_dotenv, find_dotenv
 from typing import List, Dict, Any
 
 # Import tools from separate file
-from backend.minecraft_assistant.tools.webSearchTool import tavilySearchTool
+from tools.webSearchTool import tavilySearchTool
 
 # Load environment variables
 load_dotenv(find_dotenv())
@@ -80,3 +80,14 @@ async def generate_response(query: str, chat_session_token: str) -> str:
         error_msg = f"Error generating response: {str(e)}"
         print(error_msg)
         return error_msg
+    
+#test the function
+if __name__ == "__main__":
+    import asyncio
+    session_id = "test_session"
+    query = "What is the best way to find diamonds in Minecraft?"
+    try:
+        response = asyncio.run(generate_response(query, session_id))
+        print(response)
+    except Exception as e:
+        print(f"Error: {str(e)}")

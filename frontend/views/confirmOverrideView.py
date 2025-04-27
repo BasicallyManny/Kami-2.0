@@ -4,6 +4,7 @@ import discord
 import httpx
 
 from views.coordinateSelectView import CoordinateSelectView
+from pprint import pprint
 
 
 class ConfirmOverwriteView(discord.ui.View):
@@ -131,14 +132,21 @@ class ConfirmOverwriteView(discord.ui.View):
                 f"Processing overwrite for coordinate: {selected_coordinate['coordinateName']}",
                 ephemeral=True
             )
-            print(f"selectedCoordinate: {selected_coordinate}")
-            print(f"self.data: {self.data}")
-            
+            #build the payload
+            payload = {
+                "coordinateName": self.data['coordinateName'],
+                "coordinates": {
+                    "x": self.data['coordinates']['x'],
+                    "y": self.data['coordinates']['y'],
+                    "z": self.data['coordinates']['z']
+                },
+                "dimensions": self.data['dimension'],
+            }
             # Add your overwrite logic here
-            api_url = f"{self.API_URL}/coordinates/{selected_coordinate['guild_id']}/{selected_coordinate['coordinateName']}"
+            api_url = f"{self.API_URL}/coordinates/{selected_coordinate['_id']}"
             #Call fastAPI endpoint to overwrite Coordinate
             async with httpx.AsyncClient() as client:
-                response = await client.put(api_url, json=self.data)
+                response = await client.put(api_url, json=payload, params={"guild_id": selected_coordinate['guild_id']})
             
             if response.status_code == 200:
                 # Successfully added, so confirm with an embed

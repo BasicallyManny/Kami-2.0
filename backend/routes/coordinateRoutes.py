@@ -5,6 +5,7 @@ from typing import List
 from dotenv import load_dotenv
 import os
 from pydantic import ValidationError
+from bson import ObjectId
 
 # Create fastAPI router
 coordinateRouter = APIRouter()
@@ -79,83 +80,48 @@ async def add_coordinate(guild_id: str, coordinate_name: str, coordinate: Minecr
     try:
         coordinate.guild_id = guild_id
         coordinate.coordinateName = coordinate_name
-        MongoConnection.insert_document(DB_NAME, COLLECTION_NAME, coordinate.dict())
+        payload = coordinate.dict(by_alias=True, exclude_none=True)
+         # Remove the duplicate id field if both exist
+        if "id" in payload and "_id" in payload:
+            del payload["id"]
+        MongoConnection.insert_document(DB_NAME, COLLECTION_NAME, payload)
         return coordinate
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=f"Validation error: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@coordinateRouter.put("/coordinates/{guild_id}/{coordinate_name}", response_model=MinecraftCoordinate)
-async def overwrite_coordinate(guild_id: str, coordinate_name: str, coordinate: MinecraftCoordinate):
-    """ Updates an existing Minecraft coordinate in the database. """
+
+@coordinateRouter.put("/coordinates/{coordinate_id}", response_model=CoordinateUpdatePayload)
+async def overwrite_coordinate(guild_id: str, coordinate_id: str, coordinate: CoordinateUpdatePayload):
+    """ Updates an existing Minecraft coordinate in the database by object ID. """
     try:
-        existing = MongoConnection.find_one_document(
-            DB_NAME, COLLECTION_NAME,
-            {"coordinateName": coordinate_name, "guild_id": guild_id}
+        coordinate_id = ObjectId(coordinate_id)
+        
+        # Convert payload to dict and remove None values to avoid overwriting fields
+        update_data = {k: v for k, v in coordinate.dict().items() if v is not None}
+        
+        updated_count = MongoConnection.update_document(
+            DB_NAME, COLLECTION_NAME, {"_id": coordinate_id, "guild_id": guild_id}, update_data
         )
 
-        if not existing:
+        if updated_count == 0:
             raise HTTPException(status_code=404, detail="Coordinate not found")
 
-        MongoConnection.update_document_element(DB_NAME, COLLECTION_NAME, {"coordinateName": coordinate_name, "guild_id": guild_id}, coordinate.dict())
-        return coordinate
+        # Fetch the updated document to return
+        updated_coordinate = MongoConnection.get_document(
+            DB_NAME, COLLECTION_NAME, {"_id": coordinate_id}
+        )
+        
+        if not updated_coordinate:
+            raise HTTPException(status_code=404, detail="Failed to retrieve updated coordinate")
+            
+        return CoordinateUpdatePayload(**updated_coordinate)
+    
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=f"Validation error: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-@coordinateRouter.patch("/coordinates/{guild_id}/{coordinate_name}", response_model=MinecraftCoordinate)
-async def update_coordinate(
-    guild_id: str,
-    coordinate_name: str,
-    update_data: CoordinateUpdatePayload
-):
-    """ Update a coordinate's name and/or coordinates in the database. """
-    try:
-        new_name = update_data.new_name
-        coordinates = update_data.coordinates
-
-        if not new_name and not coordinates:
-            raise HTTPException(status_code=400, detail="Either new_name or coordinates must be provided")
-
-        existing = MongoConnection.find_one_document(
-            DB_NAME, COLLECTION_NAME,
-            {"coordinateName": coordinate_name, "guild_id": guild_id}
-        )
-
-        if not existing:
-            raise HTTPException(status_code=404, detail="Coordinate not found")
-
-        if new_name:
-            name_exists = MongoConnection.find_one_document(
-                DB_NAME, COLLECTION_NAME,
-                {"coordinateName": new_name, "guild_id": guild_id, "_id": {"$ne": existing["_id"]}}
-            )
-
-            if name_exists:
-                raise HTTPException(status_code=400, detail=f"Coordinate name '{new_name}' already exists.")
-
-        update_fields = {}
-        if coordinates:
-            update_fields["coordinates"] = coordinates.dict()
-        if new_name:
-            update_fields["coordinateName"] = new_name
-
-        updated_doc = MongoConnection.update_and_return_document(
-            DB_NAME,
-            COLLECTION_NAME,
-            {"coordinateName": coordinate_name, "guild_id": guild_id},
-            update_fields
-        )
-
-        if not updated_doc:
-            raise HTTPException(status_code=400, detail="Update failed. No changes made.")
-
-        return mongo_to_pydantic(updated_doc)
-
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 @coordinateRouter.delete("/coordinates/{guild_id}/{coordinate_name}")
 async def delete_coordinate(guild_id: str, coordinate_name: str):

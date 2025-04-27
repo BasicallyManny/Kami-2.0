@@ -10,29 +10,21 @@ class MongoConnection:
         self.uri = uri
         self.client = None
         self.connect()
-
+        
     def connect(self):
         """Establish a connection to MongoDB"""
         try:
-            parsed_uri = urlparse(self.uri)
-            cluster_name = parsed_uri.hostname  # Extract cluster name
-            print(f"MongoDB URI (connections): {parsed_uri}")
-            print(f"Attempting to connect to MongoDB cluster: {cluster_name}")
-
             self.client = MongoClient(self.uri)
             self.client.admin.command("ping")  # Test connection
-            print("Connected to MongoDB through Connections")
         except PyMongoError as e:
-            print(f"Error connecting to MongoDB: {e}")
             raise Exception("Failed to connect to MongoDB.")    
 
     def disconnect(self):
         """Disconnect from MongoDB"""
         if self.client:
             self.client.close()
-            print("Disconnected from MongoDB")
         else:
-            print("No active MongoDB connection to disconnect.")
+            raise Exception("Not connected to MongoDB")
 
     def get_db(self, db_name: str):
         """Retrieve the specified database"""
@@ -51,6 +43,12 @@ class MongoConnection:
         """Retrieve the specified collection"""
         db = self.get_db(db_name)
         return db[collection_name]
+    
+    def get_document(self, db_name: str, collection_name: str, query: dict):
+        """Retrieve a single document from a collection"""
+        db = self.get_db(db_name)
+        collection = db[collection_name]
+        return collection.find_one(query)
 
     def insert_document(self, db_name: str, collection_name: str, document: dict):
         """Insert a document into a collection"""
@@ -108,8 +106,7 @@ class MongoConnection:
         )
     
         if not result:
-            print(f"⚠️ Update failed: No document matched query {query} or no changes were needed.")
-            return None
+            return Exception("Document not found or update failed")
         
         return result
     
