@@ -32,12 +32,13 @@ class DelCoordModal(Modal):
                 response = await client.get(f"{self.API_URL}/coordinates/{guild_id}/{name}")
                 coordinates = response.json()
 
-                if not coordinates:
+                # Handle error from API
+                if isinstance(coordinates, dict) and coordinates.get("detail") == '404: Coordinate Name not found':
                     response_embed = discord.Embed(
                         title="❌ Coordinate Not Found",
                         description=f"Could not find a coordinate named `{name}`.",
                         color=discord.Color.red()
-                    )
+                    )   
                     await interaction.response.send_message(embed=response_embed, ephemeral=True)
                     return
                 
