@@ -108,7 +108,6 @@ class MinecraftAssistantCog(commands.Cog):
         """
         Clear all Minecraft coordinates for the current guild
         """
-        print(f"{self.API_URL}")
         await interaction.response.defer()  # Defer response to prevent timeout
 
         try:

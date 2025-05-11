@@ -4,6 +4,7 @@ import discord
 from discord.ui import Modal, TextInput
 from dotenv import load_dotenv
 import httpx
+from backend.models.coordinates import CoordinateUpdatePayload
 
 class UpdateModal(Modal):
     def __init__(self, coordinates: dict):
@@ -11,9 +12,6 @@ class UpdateModal(Modal):
         load_dotenv()
         self.coordinates = coordinates
         self.API_URL = os.getenv('API_URL')
-        
-        # Print the coordinates structure for debugging
-        print("Coordinates structure:", json.dumps(coordinates, indent=2))
         
         # Extract values with careful fallbacks
         coordinate_name = ""
@@ -77,28 +75,17 @@ class UpdateModal(Modal):
         self.add_item(self.z)
         self.add_item(self.dimension)
 
-    def validate_coordinates(self):
-        try:
-            x = int(self.x.value)
-            y = int(self.y.value)
-            z = int(self.z.value)
-        except ValueError:
-            return False
-        return True
-
     async def on_submit(self, interaction: discord.Interaction):
-        if not self.validate_coordinates():
-            await interaction.response.send_message("⚠️ Error: Coordinates must be integers.", ephemeral=True)
-            return
-
+        # First, acknowledge the interaction to prevent timeout
+        await interaction.response.defer(ephemeral=True)
+        
         name = self.name.value.strip()
         x = int(self.x.value.strip())
         y = int(self.y.value.strip())
         z = int(self.z.value.strip())
         dimension = self.dimension.value.strip().lower()
 
-        guild_id = interaction.guild.id
-        guild_name = interaction.guild.name
+        guild_id = str(interaction.guild.id)  # Ensure guild_id is a string
         coordinate_id = self.coordinates['_id']
 
         payload = {
@@ -109,30 +96,50 @@ class UpdateModal(Modal):
                 "z": z
             },
             "dimension": dimension,
-            "guild_id": str(guild_id),
-            "guild_name": guild_name
         }
-
-        response_embed = discord.Embed(
-            title="Updating Coordinate...",
-            description=f"Updating coordinate with payload: {payload}",
-            color=discord.Color.blue()
-        )
-        await interaction.response.send_message(embed=response_embed, ephemeral=True)
-
-        # async with httpx.AsyncClient() as client:
-        #     response = await client.put(f"{self.API_URL}/coordinates/{coordinate_id}", json=payload)
-        #     if response.status_code == 200:
-        #         success_embed = discord.Embed(
-        #             title="✅ Coordinate Updated",
-        #             description=f"Coordinate `{name}` has been updated successfully.",
-        #             color=discord.Color.green()
-        #         )
-        #         await interaction.followup.send(embed=success_embed, ephemeral=True)
-        #     else:
-        #         error_embed = discord.Embed(
-        #             title="❌ Error Updating Coordinate",
-        #             description=f"Failed to update coordinate `{name}`. Please try again.",
-        #             color=discord.Color.red()
-        #         )
-        #         await interaction.followup.send(embed=error_embed, ephemeral=True)
+        
+        try:
+            # Since the FastAPI route expects guild_id as a query parameter
+            async with httpx.AsyncClient() as client:
+                response = await client.put(
+                    f"{self.API_URL}/coordinates/{coordinate_id}",
+                    params={"guild_id": guild_id},  # Pass guild_id as a query parameter
+                    json=payload,
+                    headers={"Content-Type": "application/json"}
+                )
+                
+                if response.status_code == 200:
+                    success_embed = discord.Embed(
+                        title="✅ Coordinate Updated",
+                        description=f"Coordinate `{name}` has been updated successfully.",
+                        color=discord.Color.green()
+                    )
+                    await interaction.followup.send(embed=success_embed, ephemeral=True)
+                else:
+                    error_embed = discord.Embed(
+                        title="❌ Error Updating Coordinate",
+                        description=f"Failed to update coordinate `{name}`. Status code: {response.status_code}. Response: {response.text}",
+                        color=discord.Color.red()
+                    )
+                    await interaction.followup.send(embed=error_embed, ephemeral=True)
+        except httpx.RequestError as e:
+            error_embed = discord.Embed(
+                title="❌ Request Error",
+                description=f"An error occurred while making the request: {str(e)}",
+                color=discord.Color.red()
+            )
+            await interaction.followup.send(embed=error_embed, ephemeral=True)
+        except httpx.HTTPStatusError as e:
+            error_embed = discord.Embed(
+                title="❌ HTTP Error",
+                description=f"Received an error response: {str(e)}",
+                color=discord.Color.red()
+            )
+            await interaction.followup.send(embed=error_embed, ephemeral=True)
+        except Exception as e:
+            error_embed = discord.Embed(
+                title="❌ Unexpected Error",
+                description=f"An unexpected error occurred: {str(e)}",
+                color=discord.Color.red()
+            )
+            await interaction.followup.send(embed=error_embed, ephemeral=True)

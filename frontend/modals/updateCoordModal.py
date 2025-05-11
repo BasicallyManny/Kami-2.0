@@ -69,8 +69,6 @@ class UpdateCoordModal(Modal):
 
     async def handle_coordinate_selection(self, interaction: discord.Interaction, selected_coordinate):
         try:
-            print("Selected coordinate for update:")
-            print(json.dumps(selected_coordinate, indent=4))
 
             update_modal = UpdateModal(selected_coordinate)
             await interaction.response.send_modal(update_modal)

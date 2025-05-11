@@ -4,7 +4,6 @@ import discord
 import httpx
 
 from views.coordinateSelectView import CoordinateSelectView
-from pprint import pprint
 
 
 class ConfirmOverwriteView(discord.ui.View):
