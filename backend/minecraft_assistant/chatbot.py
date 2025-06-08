@@ -1,7 +1,7 @@
-from langchain_community.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import MessagesPlaceholder, HumanMessagePromptTemplate
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
-from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain.agents import AgentExecutor, create_openai_functions_agent
 from dotenv import load_dotenv, find_dotenv
 import asyncio
 import os
@@ -14,19 +14,18 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 load_dotenv(find_dotenv())
 
 def create_agent(system_prompt):
-    """Main Agent Executor"""
+    """Main Agent Executor using Ollama"""
     
-    # Initialize chat model
-    llm = ChatOpenAI(
-        model="gpt-3.5-turbo",  # Use "gpt-4" or other models as needed
-        temperature=0,
-        openai_api_key=os.getenv("OPENAI_API_KEY")
+    # Load Ollama model (e.g., mistral, phi, llama3)
+    llm = ChatOllama(
+        model="mistral",  # Change this if you want to try llama3, phi, etc.
+        temperature=0
     )
     
-    # Define available tools
+    # Define tools
     tools = [TavilySearchResults(max_results=3)]
     
-    # Create a Minecraft-focused prompt template with more structured input handling
+    # Prompt structure
     human_message_prompt = HumanMessagePromptTemplate.from_template("{input}")
     
     prompt = ChatPromptTemplate.from_messages([
@@ -36,10 +35,10 @@ def create_agent(system_prompt):
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ])
     
-    # Create agent
-    agent = create_openai_tools_agent(llm, tools, prompt)
+    # Use create_openai_functions_agent for Ollama-compatible tools agent
+    agent = create_openai_functions_agent(llm, tools, prompt)
     
-    # Create agent executor
+    # Wrap with executor
     agent_executor = AgentExecutor(
         agent=agent,
         tools=tools,
@@ -58,22 +57,22 @@ async def generate_response(query: str, session_id: str, system_prompt: str = "Y
         # Get current chat history
         current_history = message_history.get_messages(session_id)
         
-        # Create agent with current context
+        # Create agent
         agent_executor = create_agent(system_prompt)
         
-        # Prepare chat history for the agent
+        # Format history
         formatted_history = []
         for msg in current_history:
             role = "ai" if msg["role"] == "assistant" else msg["role"]
             formatted_history.append((role, msg["content"]))
         
-        # Get response
+        # Invoke agent
         response = await agent_executor.ainvoke({
             "input": query,
             "chat_history": formatted_history
         })
         
-        # Store the messages
+        # Store messages
         message_history.add_message(session_id, {"role": "human", "content": query})
         message_history.add_message(session_id, {"role": "assistant", "content": response["output"]})
         
@@ -88,7 +87,7 @@ async def generate_response(query: str, session_id: str, system_prompt: str = "Y
 if __name__ == "__main__":
     session_id = "test_session"
     
-    # Define a Minecraft-specialized system prompt using PromptTemplate
+    # Define system prompt
     system_prompt_template = PromptTemplate.from_template(
         """You are Kami, a specialized AI assistant that provides accurate and helpful information about Minecraft.
         
@@ -111,27 +110,19 @@ if __name__ == "__main__":
         """
     )
     
-    # Format the system prompt template with current date
     from datetime import datetime
     current_date = datetime.now().strftime("%Y-%m-%d")
     system_prompt = system_prompt_template.format(current_date=current_date)
     
     async def run_example():
-        # Example 1: Minecraft-specific question
         query1 = "How do I find netherite in Minecraft?"
         print(f"Q1: {query1}")
-        response1 = await generate_response(
-            query1, 
-            session_id,
-            system_prompt
-        )
+        response1 = await generate_response(query1, session_id, system_prompt)
         print(f"A1: {response1}\n")
         
-        # Example 2: Follow-up question to show context awareness
         query2 = "What tools should I use to mine it efficiently?"
         print(f"Q2: {query2}")
         response2 = await generate_response(query2, session_id)
         print(f"A2: {response2}")
     
-    # Run the example
     asyncio.run(run_example())
