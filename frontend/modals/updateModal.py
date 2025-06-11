@@ -114,7 +114,7 @@ class UpdateModal(Modal):
                         description=f"Coordinate `{name}` has been updated successfully.",
                         color=discord.Color.green()
                     )
-                    await interaction.followup.send(embed=success_embed, ephemeral=True)
+                    await interaction.followup.send(embed=success_embed)
                 else:
                     error_embed = discord.Embed(
                         title="❌ Error Updating Coordinate",
