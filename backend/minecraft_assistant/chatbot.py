@@ -1,4 +1,4 @@
-from langchain_community.chat_models import ChatOllama
+from langchain_community.llms import Ollama
 from langchain_core.prompts import MessagesPlaceholder, HumanMessagePromptTemplate
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain.agents import AgentExecutor, create_openai_functions_agent
@@ -17,8 +17,9 @@ def create_agent(system_prompt):
     """Main Agent Executor using Ollama"""
     
     # Load Ollama model (e.g., mistral, phi, llama3)
-    llm = ChatOllama(
-        model="mistral",  # Change this if you want to try llama3, phi, etc.
+    llm = Ollama(
+        base_url=os.getenv("OLLAMA_API_URL", "http://localhost:11434"),
+        model="phi", 
         temperature=0
     )
     
