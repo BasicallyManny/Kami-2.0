@@ -2,7 +2,8 @@ import yt_dlp
 from langchain.tools import Tool
 def youtube_search(query: str) -> str:
     """
-    Robust YouTube search with multiple fallback methods
+    Search YouTube for videos based on the provided query.
+    Returns a formatted string with video titles, channels, durations, and URLs.
     """
     search_term = query.split(',')[0].strip() if ',' in query else query.strip()
     try:

@@ -2,21 +2,24 @@ from langchain_community.chat_models import ChatOllama
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain import hub
-from pydantic import BaseModel
+import re
 from dotenv import load_dotenv, find_dotenv
 from datetime import datetime
 import asyncio
 import os
 import MessageHistory
 from bot_tools.youtubeTool import youtube_tool
+from pydantic import BaseModel
+from typing import Optional
 
 # Load environment variables
 load_dotenv(find_dotenv())
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
-class AgentResponse(BaseModel):
-    answer: str
 
+class ChatResponse(BaseModel):
+    answer: Optional[str] = None
+    urls: Optional[list[str]] = None
 
 def create_agent() -> AgentExecutor:
     llm = ChatOllama(model="mistral", temperature=0, base_url=OLLAMA_BASE_URL)
@@ -54,7 +57,15 @@ def format_chat_history(history):
     
     return "\n".join(formatted)
 
-async def generate_response(query: str, session_id: str) -> AgentResponse:
+def extract_urls_from_text(text: str) -> list[str]:
+    """Extract URLs from text using regex"""
+    url_pattern = r'https?://[^\s\n]+'
+    urls = re.findall(url_pattern, text)
+    return list(set(urls))  # Remove duplicates
+
+
+
+async def generate_response(query: str, session_id: str) -> ChatResponse:
     try:
         history = message_history.get_messages(session_id)
         chat_history_str = format_chat_history(history)
@@ -65,14 +76,19 @@ async def generate_response(query: str, session_id: str) -> AgentResponse:
         agent = create_agent()
         result = await agent.ainvoke({"input": input_text})
 
+        # Extract answer and URLs
+        answer_text = result["output"]
+        urls = extract_urls_from_text(answer_text)
+
         # Save to history
         message_history.add_message(session_id, {"role": "human", "content": query})
-        message_history.add_message(session_id, {"role": "assistant", "content": result["output"]})
+        message_history.add_message(session_id, {"role": "assistant", "content": answer_text})
 
-        return AgentResponse(answer=result["output"])
+        return ChatResponse(answer=answer_text, urls=urls)
 
     except Exception as e:
-        return AgentResponse(answer=f"Error processing request: {str(e)}")
+        error_msg = f"Error processing request: {str(e)}"
+        return ChatResponse(answer=error_msg, urls=[])
 
 # Demo usage
 if __name__ == "__main__":
@@ -81,6 +97,7 @@ if __name__ == "__main__":
             "Find a recent YouTube tutorial for a Minecraft 1.20.4 netherite farm", 
             "demo-session"
         )
-        print(response.answer)
+        print("Answer:", response.answer)
+        print("URLs found:", response.urls)
 
     asyncio.run(run())
