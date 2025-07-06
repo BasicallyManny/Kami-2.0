@@ -31,11 +31,10 @@ def create_agent() -> AgentExecutor:
 
 Instructions:
 - You are a Web Search Agent for Minecraft-related queries.
-- Use YouTubeSearch for tutorials, guides, farm builds, or Minecraft videos
-- Use TavilySearchResults for recent updates or technical topics
-- Provide detailed responses about Minecraft mechanics, builds, and strategies
-- When providing your final answer, focus on summarizing the key information and concepts rather than listing specific URLs
-- Present information in a clear, educational format that helps users understand the topic"""
+- Use YouTubeSearch for tutorials, guides, farm builds, or Minecraft videos with URLS
+- Use TavilySearchResults for recent updates or technical topics with URLS
+- Present answers in a clear, concise manner with relevant URLs.
+"""
 
     prompt = prompt.partial(instructions=custom_instructions)
     agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
@@ -62,51 +61,6 @@ def extract_urls_from_text(text: str) -> list[str]:
     urls = re.findall(url_pattern, text)
     return list(set(urls))  # Remove duplicates
 
-def clean_urls_from_text(text: str) -> str:
-    """Remove URLs from text and clean up formatting"""
-    # Remove URLs
-    url_pattern = r'https?://[^\s\n<>)(\]]+(?=[\s\n<>)(\]]|$)'
-    cleaned_text = re.sub(url_pattern, '', text)
-    
-    # Clean up extra whitespace and formatting issues
-    cleaned_text = re.sub(r'\s+', ' ', cleaned_text)  # Multiple spaces to single space
-    cleaned_text = re.sub(r'[\n\r]+', '\n', cleaned_text)  # Multiple newlines to single
-    cleaned_text = re.sub(r'\n\s*\n', '\n\n', cleaned_text)  # Clean paragraph breaks
-    cleaned_text = cleaned_text.strip()
-    
-    # Remove common artifacts left after URL removal
-    cleaned_text = re.sub(r'\s*[-–—]\s*$', '', cleaned_text, flags=re.MULTILINE)
-    cleaned_text = re.sub(r'^\s*[-–—]\s*', '', cleaned_text, flags=re.MULTILINE)
-    cleaned_text = re.sub(r'\s*:\s*$', '', cleaned_text, flags=re.MULTILINE)
-    
-    return cleaned_text
-
-def generalize_answer(text: str) -> str:
-    """Further process the answer to make it more generalized"""
-    # Remove references to specific search results
-    text = re.sub(r'based on the search results?[,.]?\s*', '', text, flags=re.IGNORECASE)
-    text = re.sub(r'according to the search results?[,.]?\s*', '', text, flags=re.IGNORECASE)
-    text = re.sub(r'from the search results?[,.]?\s*', '', text, flags=re.IGNORECASE)
-    text = re.sub(r'the search results? show[s]?\s*', '', text, flags=re.IGNORECASE)
-    text = re.sub(r'i found[^.]*?\.\s*', '', text, flags=re.IGNORECASE)
-    
-    # Remove references to specific videos/sources without context
-    text = re.sub(r'check out this video[^.]*?\.\s*', '', text, flags=re.IGNORECASE)
-    text = re.sub(r'watch this tutorial[^.]*?\.\s*', '', text, flags=re.IGNORECASE)
-    
-    # Clean up sentences that might be incomplete after URL removal
-    sentences = text.split('.')
-    cleaned_sentences = []
-    
-    for sentence in sentences:
-        sentence = sentence.strip()
-        if len(sentence) > 10:  # Keep sentences that are substantial
-            # Check if sentence ends abruptly (common after URL removal)
-            if not sentence.endswith((':', 'at', 'on', 'in', 'by', 'from', 'to', 'for')):
-                cleaned_sentences.append(sentence)
-    
-    return '. '.join(cleaned_sentences) + ('.' if cleaned_sentences else '')
-
 async def generate_response(query: str, session_id: str) -> ChatResponse:
     try:
         history = message_history.get_messages(session_id)
@@ -122,28 +76,13 @@ async def generate_response(query: str, session_id: str) -> ChatResponse:
         raw_answer = result["output"]
         urls = extract_urls_from_text(raw_answer)
         
-        # Clean URLs from answer and generalize it
-        cleaned_answer = clean_urls_from_text(raw_answer)
-        generalized_answer = generalize_answer(cleaned_answer)
-        
         # Save original query and generalized answer to history
         message_history.add_message(session_id, {"role": "human", "content": query})
-        message_history.add_message(session_id, {"role": "assistant", "content": generalized_answer})
+        message_history.add_message(session_id, {"role": "assistant", "content": raw_answer})
         
-        return ChatResponse(answer=generalized_answer, urls=urls)
+        return ChatResponse(answer=raw_answer, urls=urls)
     
     except Exception as e:
         error_msg = f"Error processing request: {str(e)}"
         return ChatResponse(answer=error_msg, urls=[])
-
-# Demo usage
-if __name__ == "__main__":
-    async def run():
-        response = await generate_response(
-            "How do I build an automatic sugar cane farm in Minecraft?", 
-            "demo-session"
-        )
-        print("Answer:", response.answer)
-        print("URLs found:", response.urls)
-    
-    asyncio.run(run())          
+         

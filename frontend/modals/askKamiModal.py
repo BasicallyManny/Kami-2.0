@@ -2,7 +2,7 @@ import discord
 from discord.ui import Modal, TextInput, View, Button
 import httpx
 import asyncio
-from backend.models.chatbotModels import ChatRequest
+from backend.models.chatbotModels import ChatRequest, ChatResponse
 
 class AskKamiModal(Modal):
     def __init__(self):
@@ -63,16 +63,16 @@ class AskKamiModal(Modal):
                     "session_id": session_id
                 }
                 
-                response = await client.post(api_url, json=request_data)
+                response:ChatResponse = await client.post(api_url, json=request_data)
                 
             # Cancel loading animation
             loading_task.cancel()
             
             if response.status_code == 200:
                 data = response.json()
+                print(f"Response data: {data}")  # Debugging line
                 answer = data.get("answer", "I couldn't find an answer to your question.")
                 urls = data.get("urls", [])
-                
                 # Create response embed
                 embed = discord.Embed(
                     title="🤖 Kami's Response",
