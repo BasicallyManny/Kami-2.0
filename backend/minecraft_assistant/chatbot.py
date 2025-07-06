@@ -10,11 +10,13 @@ from minecraft_assistant import MessageHistory
 from minecraft_assistant.bot_tools.youtubeTool import youtube_tool
 from pydantic import BaseModel
 from typing import Optional
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime
+import time
 
 # Load environment variables
 load_dotenv(find_dotenv())
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-
 
 class ChatResponse(BaseModel):
     answer: Optional[str] = None
@@ -33,6 +35,7 @@ Instructions:
 - You are a Web Search Agent for Minecraft-related queries.
 - Use YouTubeSearch for tutorials, guides, farm builds, or Minecraft videos with URLS
 - Use TavilySearchResults for recent updates or technical topics with URLS
+- Always provide URLs in your final answer.
 - Present answers in a clear, concise manner with relevant URLs.
 """
 
@@ -67,7 +70,7 @@ async def generate_response(query: str, session_id: str) -> ChatResponse:
         chat_history_str = format_chat_history(history)
         
         # Include history if it exists
-        input_text = f"Previous conversation:\n{chat_history_str}\n\nCurrent question: {query}" if chat_history_str else query
+        input_text = f"Previous conversation:\n{chat_history_str}\n\nCurrent question: {query + '(Minecraft)'}" if chat_history_str else query
         
         agent = create_agent()
         result = await agent.ainvoke({"input": input_text})
@@ -75,8 +78,12 @@ async def generate_response(query: str, session_id: str) -> ChatResponse:
         # Extract URLs first
         raw_answer = result["output"]
         urls = extract_urls_from_text(raw_answer)
+
+        # Always include the URLs at the end of the answer
+        if urls:
+            raw_answer += "\n\nRelevant URL(s):\n" + "\n".join(urls)
         
-        # Save original query and generalized answer to history
+        # Save query and answer
         message_history.add_message(session_id, {"role": "human", "content": query})
         message_history.add_message(session_id, {"role": "assistant", "content": raw_answer})
         
@@ -85,4 +92,13 @@ async def generate_response(query: str, session_id: str) -> ChatResponse:
     except Exception as e:
         error_msg = f"Error processing request: {str(e)}"
         return ChatResponse(answer=error_msg, urls=[])
-         
+
+# Daily Memory Wipe Scheduler
+def clear_memory():
+    """Clear all chat sessions at midnight"""
+    print(f"[{datetime.now()}] Clearing all chat sessions.")
+    message_history._store = {}  # Adjust based on how your MessageHistory is implemented
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(clear_memory, 'cron', hour=0, minute=0)  # Every day at 00:00
+scheduler.start()
