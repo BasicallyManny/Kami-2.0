@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
 # Initialize FastAPI app and register lifespan context manager
 app = FastAPI(lifespan=lifespan)
 app.include_router(coordinateRouter)
-app.include_router(chatbotRouter, prefix="/chatbot", tags=["Chatbot"])
+app.include_router(chatbotRouter, tags=["Chatbot"])
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):

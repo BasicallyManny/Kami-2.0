@@ -5,7 +5,7 @@ from models.chatbotModels import ChatRequest
 chatbotRouter = APIRouter()
 
 @chatbotRouter.post("/chatbot/{guild_id}/{channel_id}")
-async def chatbot_response(guild_id: str, channel_id: str, request: ChatRequest):
+async def chatbot_response(request: ChatRequest):
     try:
         response = await generate_response(query=request.query, session_id=request.session_id)
         return response
