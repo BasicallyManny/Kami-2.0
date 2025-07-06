@@ -8,6 +8,7 @@ from config.connections import MongoConnection
 from dotenv import load_dotenv
 #import routes
 from routes.coordinateRoutes import coordinateRouter
+from routes.botRoutes import chatbotRouter
 
 # Load environment variables from .env file
 load_dotenv()
@@ -43,6 +44,7 @@ async def lifespan(app: FastAPI):
 # Initialize FastAPI app and register lifespan context manager
 app = FastAPI(lifespan=lifespan)
 app.include_router(coordinateRouter)
+app.include_router(chatbotRouter, prefix="/chatbot", tags=["Chatbot"])
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):

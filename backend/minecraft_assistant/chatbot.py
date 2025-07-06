@@ -4,11 +4,10 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain import hub
 import re
 from dotenv import load_dotenv, find_dotenv
-from datetime import datetime
 import asyncio
 import os
-import MessageHistory
-from bot_tools.youtubeTool import youtube_tool
+from minecraft_assistant import MessageHistory
+from minecraft_assistant.bot_tools.youtubeTool import youtube_tool
 from pydantic import BaseModel
 from typing import Optional
 
@@ -147,4 +146,4 @@ if __name__ == "__main__":
         print("Answer:", response.answer)
         print("URLs found:", response.urls)
     
-    asyncio.run(run())
+    asyncio.run(run())          
