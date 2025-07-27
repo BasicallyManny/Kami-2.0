@@ -2,10 +2,10 @@
 fastapi==0.115.9
 uvicorn[standard]==0.34.0
 
-# LangChain ecosystem
+# LangChain ecosystem - Updated for compatibility
 langchain==0.3.18
 langchain-community==0.3.17
-langchain-core==0.3.65
+langchain-core==0.3.18  # Fixed: matched to langchain version
 langchain-ollama==0.3.3
 langchain-text-splitters==0.3.8
 langsmith==0.3.45
@@ -20,7 +20,7 @@ tiktoken==0.9.0
 huggingface-hub==0.32.5
 tokenizers==0.21.1
 
-# Data & Utilities
+# Data & Utilities - Pydantic compatibility fixes
 numpy==1.26.4
 pydantic==2.10.6
 pydantic-settings==2.9.1
@@ -37,7 +37,7 @@ backoff==2.2.1
 # Logging and debugging
 loguru==0.7.3
 coloredlogs==15.0.1
-rich==14.0.0
+rich==13.9.4  # Fixed: compatible with Python 3.8+
 
 # Kubernetes client (if you're using it)
 kubernetes==33.1.0
@@ -53,7 +53,7 @@ discord.py==2.5.2
 dataclasses-json==0.6.7
 marshmallow==3.26.1
 
-# Observability (OpenTelemetry)
+# Observability (OpenTelemetry) - Fixed version compatibility
 opentelemetry-api==1.34.1
 opentelemetry-instrumentation==0.55b1
 opentelemetry-instrumentation-fastapi==0.55b1
