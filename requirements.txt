@@ -4,7 +4,6 @@ uvicorn[standard]==0.34.0
 
 # LangChain ecosystem
 langchain==0.3.18
-langchain-chroma==0.2.4
 langchain-community==0.3.17
 langchain-core==0.3.65
 langchain-ollama==0.3.3
