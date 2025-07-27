@@ -263,9 +263,16 @@ class MinecraftAssistantCog(commands.Cog):
         """
         Ask a Minecraft-related question and get an AI-generated response.
         """
+        response_embed = discord.Embed(
+            title="Temporary Disabled",
+            description="This command is currently disabled for maintenance. Please check back later.",
+            color=discord.Color.red()
+        )
+        
         try:
             # Send the modal to the user
-            await interaction.response.send_modal(AskKamiModal())
+            #await interaction.response.send_modal(AskKamiModal())
+            await interaction.response.send_message(embed=response_embed, ephemeral=True)
             
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
