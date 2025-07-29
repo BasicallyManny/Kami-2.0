@@ -3,8 +3,11 @@ from discord.ui import Modal, TextInput, View, Button
 import httpx
 import asyncio
 from backend.models.chatbotModels import ChatRequest, ChatResponse
+import os
+
 
 class AskKamiModal(Modal):
+    
     def __init__(self):
         super().__init__(title="Ask Kami - Minecraft AI Assistant")
         
@@ -49,11 +52,12 @@ class AskKamiModal(Modal):
         
         # Start loading animation task
         loading_task = asyncio.create_task(self._animate_loading(original_message, loading_states))
+        API_URL = os.getenv("API_URL", "http://localhost:8000")  # Default to local API if not set
         
         try:
             # Call the API to get response from Kami
             async with httpx.AsyncClient(timeout=60.0) as client:
-                api_url = f"http://localhost:8000/chatbot/{interaction.guild_id}/{interaction.channel_id}" 
+                api_url = f"{API_URL}/chatbot/{interaction.guild_id}/{interaction.channel_id}" 
                 # Prepare request data
                 #build session_id from guild and channel IDs
                 session_id = f"{interaction.guild_id}-{interaction.channel_id}-{interaction.user.id}"
