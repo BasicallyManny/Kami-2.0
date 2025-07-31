@@ -7,8 +7,6 @@ langchain==0.3.18
 langchain-community==0.3.17
 langchain-core==0.3.34  
 langchain-ollama==0.3.3
-langchain-text-splitters==0.3.8
-langsmith==0.3.45
 
 # Vector DB
 chromadb==1.0.12
