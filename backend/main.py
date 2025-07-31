@@ -52,5 +52,6 @@ async def root(request: Request):
     file_path = os.path.join(os.getcwd(), "static", "index.html")
     with open(file_path, "r") as f:
         content = f.read()
-    return HTMLResponse(content=content)
+    return HTMLResponse(content=content)\
+        
 
